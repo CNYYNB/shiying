@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * 检查 macOS 构建产物（不需要 Mac）：解压 dist/拾影-<版本>-mac-<arch>.zip，检查
+ * 检查 macOS 构建产物（不需要 Mac）：解压 dist/Shiying-macOS-<版本>-<arch>.zip，检查
  *  - Info.plist：CFBundleIdentifier、版本、CFBundleDisplayName 拾影、LSMinimumSystemVersion、图标、ElectronAsarIntegrity 与 app.asar 头一致
  *  - app.asar 内容：主进程、界面、sysplat / tools（含 mac 下载来源）、依赖、package.json 版本
  *  - 主程序 / Helper / Framework 的 CPU 架构
@@ -46,7 +46,7 @@ function walk(d, out = []) {
 }
 
 function verify(arch) {
-  const zip = path.join(root, 'dist', `拾影-${pkg.version}-mac-${arch}.zip`)
+  const zip = path.join(root, 'dist', `Shiying-macOS-${pkg.version}-${arch}.zip`)
   lines.push('', `== ${path.basename(zip)} ==`)
   if (!fs.existsSync(zip)) { ok(false, '找不到 ' + zip); return }
   const data = fs.readFileSync(zip)
@@ -72,7 +72,7 @@ function verify(arch) {
   const integ = /<key>Resources\/app\.asar<\/key>\s*<dict>[\s\S]*?<key>hash<\/key>\s*<string>([0-9a-f]{64})<\/string>/.exec(plist)
   ok(integ && integ[1] === crypto.createHash('sha256').update(hdr.headerString).digest('hex'), 'ElectronAsarIntegrity 与 app.asar 头一致')
   const files = new Set(asar.listPackage(asarPath).map(f => f.replace(/\\/g, '/')))
-  for (const f of ['/package.json', '/src/main/main.js', '/src/main/preload.js', '/src/main/cookies.js', '/src/main/webcapture.js', '/src/renderer/index.html', '/src/renderer/app.js', '/src/renderer/icon.png', '/src/core/sysplat.js', '/src/core/tools.js', '/src/core/engine.js', '/src/core/telegram.js', '/node_modules/telegram/index.js', '/node_modules/undici/index.js', '/node_modules/yauzl/index.js', '/node_modules/big-integer/BigInteger.js'])
+  for (const f of ['/package.json', '/src/main/main.js', '/src/main/preload.js', '/src/main/cookies.js', '/src/main/webcapture.js', '/src/renderer/index.html', '/src/renderer/app.js', '/src/renderer/icon.png', '/src/core/sysplat.js', '/src/core/tools.js', '/src/core/updater.js', '/src/main/updater-main.js', '/src/core/engine.js', '/src/core/telegram.js', '/node_modules/telegram/index.js', '/node_modules/undici/index.js', '/node_modules/yauzl/index.js', '/node_modules/big-integer/BigInteger.js'])
     ok(files.has(f), 'app.asar 含 ' + f)
   ok(![...files].some(f => f.startsWith('/test/') || f.startsWith('/build/') || f.startsWith('/dist/')), 'app.asar 不含 test / build / dist')
   const apkg = JSON.parse(asar.extractFile(asarPath, 'package.json').toString())
@@ -80,6 +80,14 @@ function verify(arch) {
   const toolsJs = asar.extractFile(asarPath, 'src/core/tools.js').toString()
   ok(/yt-dlp_macos/.test(toolsJs) && /ffmpeg-darwin-arm64\.gz/.test(toolsJs) && /apple-darwin/.test(toolsJs) && /com\.apple\.quarantine/.test(toolsJs), 'tools.js 含 macOS 组件来源与去隔离属性')
   ok(/menuTemplate/.test(asar.extractFile(asarPath, 'src/main/main.js').toString()), 'main.js 使用 macOS 菜单')
+  // 内置更新（1.2.0）：清单地址、更新器能认出这个 .app（和 Mac 上 ditto 解压后做的检查一样）
+  const U = require(path.join(root, 'src/core/updater'))
+  const urls = U.manifestUrls(apkg, {})
+  ok(urls.length >= 3 && urls.every(u => u.startsWith('https://')) && /shiying-louis\.pages\.dev/.test(urls[0]), `内置更新清单地址 ${urls.length} 个：${urls.map(u => new URL(u).host).join(' → ')}`)
+  let found = null
+  try { found = U.macFindAndCheckApp(tmp, pkg.version) } catch (e) { lines.push('  ' + e.message) }
+  ok(found === app, '更新器能在解压目录里找到并认出 拾影.app（bundle id、版本、主程序）')
+  ok(/检查更新/.test(asar.extractFile(asarPath, 'src/core/sysplat.js').toString()), 'macOS 菜单有「检查更新…」')
   ok(fs.existsSync(path.join(C, 'Resources', 'LICENSE.txt')) && fs.existsSync(path.join(C, 'Resources', 'NOTICE.md')), 'Resources 含 LICENSE.txt / NOTICE.md')
   // 架构
   const want = arch === 'arm64' ? 'arm64' : 'x86_64'

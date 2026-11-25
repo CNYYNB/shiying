@@ -46,7 +46,10 @@ async function init() {
   api.onSetup(onSetup)
   api.onHistoryChanged(() => renderHistory())
   api.onFocus(() => checkClipboard())
+  api.onUpdate(onUpdateEvent)
+  api.onMenuCheckUpdate(() => checkUpdate(true))
   setTimeout(checkClipboard, 400)
+  if (r.justUpdated) toast(`拾影已更新到 ${r.justUpdated.to}`, 5000)
 }
 
 function renderSettings() {
@@ -56,6 +59,7 @@ function renderSettings() {
   sel.value = S.settings.quality
   $('menuQuality').innerHTML = S.qualities.map(q => `<button data-q="${q.key}" class="${q.key === S.settings.quality ? 'on' : ''}">${q.key === S.settings.quality ? '● ' : '○ '}${esc(q.label)}</button>`).join('')
   $('menuClip').textContent = (S.settings.autoClipboard ? '✓ ' : '　 ') + '自动识别剪贴板里的链接'
+  $('menuAutoUpdate').textContent = (S.settings.updateAuto !== false ? '✓ ' : '　 ') + '启动时自动检查更新'
 }
 
 async function setQuality(q) {
@@ -446,9 +450,112 @@ async function openTelegram() {
   if ($('tgBack')) $('tgBack').onclick = async () => { await api.tgCancelLogin(); TG.step = 'form'; openTelegram() }
 }
 
+// ------------------------------------------------------------------ 拾影本身的更新
+
+const UP = { running: false, checking: false, info: null }
+const UPD_MODE_TEXT = {
+  'win-silent': '点「立即更新」后拾影会下载新版本并校验，然后自动关闭、在后台安装（保留登录状态、下载记录和设置），装好后自动重新打开。',
+  'win-setup': '你用的是便携版：点「立即更新」会下载安装包并校验，然后打开安装程序（装好后用开始菜单里的拾影；数据和便携版共用，不会丢）。',
+  mac: '点「立即更新」后拾影会下载新版本并校验，然后自动替换「应用程序」里的拾影并重新打开（保留登录状态、下载记录和设置）。',
+}
+
+/** 手动检查（manual=true）会显示「已是最新」或错误；自动检查的结果由主进程在有新版本时推送 */
+async function checkUpdate(manual) {
+  if (UP.running) { openUpdateProgress(); return }
+  if (UP.checking) return
+  UP.checking = true
+  if (manual) toast('正在检查拾影新版本…')
+  try {
+    const r = await api.updateCheck()
+    if (!r.ok) {
+      if (manual) {
+        openModal(`<h2>检查更新</h2><div class="err">${esc(r.error)}</div>
+          <div class="row-btns upd-btns"><button class="ghost" id="updPage">打开拾影主页</button><button id="updRetry" class="primary">重试</button></div>`)
+        wireUpdErr()
+      }
+      return
+    }
+    if (r.available) openUpdateDialog(r)
+    else if (manual) {
+      openModal(`<h2>检查更新</h2><p class="upd-ok">✓ 已是最新版本（${esc(r.current)}）</p>
+        <p>更新信息中的最新版本：${esc(r.version)}${r.date ? '（' + esc(r.date) + '）' : ''}</p>
+        <div class="row-btns upd-btns"><button class="primary" id="updOk">好</button></div>`)
+      $('updOk').onclick = closeModal
+    }
+  } finally { UP.checking = false }
+}
+
+function wireUpdErr() {
+  if ($('updPage')) $('updPage').onclick = () => api.updateOpenPage()
+  if ($('updRetry')) $('updRetry').onclick = () => { closeModal(); checkUpdate(true) }
+}
+
+function openUpdateDialog(r) {
+  UP.info = r
+  const manual = r.mode === 'manual'
+  let note = UPD_MODE_TEXT[r.mode] || ''
+  if (manual) note = r.belowMin ? `这个版本不能从 ${esc(r.current)} 直接内置更新，请到拾影主页下载完整安装包。` : r.dev ? '开发模式下不能安装更新，点「打开下载页」手动下载。' : '这台电脑的系统没有对应的安装文件，请到拾影主页下载。'
+  openModal(`<h2>发现拾影新版本</h2>
+    <div class="upd-ver"><b>${esc(r.version)}</b><span>当前版本 ${esc(r.current)}${r.date ? ' · 发布于 ' + esc(r.date) : ''}${r.size ? ' · 大小 ' + fmtSize(r.size) : ''}</span></div>
+    <h3>更新内容</h3>
+    <div class="upd-notes">${esc(r.notes || '（没有更新说明）')}</div>
+    <p style="font-size:13px">${note}</p>
+    ${r.busy && !manual ? '<div class="upd-warn">有下载任务正在进行或排队，更新时拾影会关闭，这些任务会中断（之后可在下载记录里重新下载）。</div>' : ''}
+    ${r.emulated ? '<div class="upd-warn">没有 Apple 芯片专用版，将安装 Intel 版（通过 Rosetta 运行）。</div>' : ''}
+    <div class="row-btns upd-btns"><button class="ghost" id="updLater">以后再说</button><button class="primary big" id="updNow">${manual ? '打开下载页' : '立即更新'}</button></div>`)
+  $('updLater').onclick = closeModal
+  $('updNow').onclick = () => manual ? (api.updateOpenPage(), closeModal()) : startUpdate()
+}
+
+function openUpdateProgress(text) {
+  openModal(`<h2>正在更新拾影${UP.info ? ' ' + esc(UP.info.version) : ''}</h2>
+    <div class="progress"><div class="bar indet" id="updBarWrap"><i id="updBar"></i></div><div class="ptext"><span id="updText">${esc(text || '正在连接…')}</span><span id="updPct"></span></div></div>
+    <div id="updErr" class="err hidden"></div>
+    <div class="row-btns upd-btns"><button class="ghost" id="updCancel">取消</button></div>`)
+  $('updCancel').onclick = () => { if (UP.running) { api.updateCancel(); $('updText').textContent = '正在取消…' } else closeModal() }
+}
+
+async function startUpdate() {
+  UP.running = true
+  openUpdateProgress()
+  let r
+  try { r = await api.updateStart() } finally { UP.running = false }
+  if (r.opened) { closeModal(); return }
+  if (r.cancelled) { closeModal(); toast('已取消更新，没下完的文件已删除'); return }
+  if (!r.ok) {
+    openModal(`<h2>更新失败</h2><div class="err">${esc(r.error)}</div>
+      <p style="font-size:13px">也可以到拾影主页手动下载新版本安装（登录状态、下载记录和设置都会保留）。</p>
+      <div class="row-btns upd-btns"><button class="ghost" id="updPage">打开拾影主页</button><button class="ghost" id="updClose">关闭</button><button id="updRetryDl" class="primary">重试</button></div>`)
+    $('updPage').onclick = () => api.updateOpenPage(); $('updClose').onclick = closeModal; $('updRetryDl').onclick = () => startUpdate()
+    return
+  }
+  if (r.manual) {
+    openModal(`<h2>新版本已下载，请手动替换</h2><div class="upd-notes">${esc(r.message)}</div>
+      <div class="row-btns upd-btns"><button class="ghost" id="updClose">以后再说</button><button class="primary" id="updQuit">退出拾影</button></div>`)
+    $('updClose').onclick = closeModal; $('updQuit').onclick = () => api.quitApp()
+    return
+  }
+  if (r.quitting && $('updText')) { $('updText').textContent = '安装中，拾影即将关闭并自动重新打开…'; show('updCancel', false) }
+}
+
+function onUpdateEvent(e) {
+  if (e.phase === 'available') { if (!UP.running && $('modal').classList.contains('hidden')) openUpdateDialog(e); return }
+  if (!$('updText')) return
+  if (e.phase === 'progress') {
+    const pct = e.total ? Math.min(100, e.done / e.total * 100) : 0
+    $('updBarWrap').classList.toggle('indet', !e.total); $('updBar').style.width = pct.toFixed(1) + '%'
+    $('updText').textContent = `正在下载 ${fmtSize(e.done) || '0 KB'} / ${fmtSize(e.total)}${e.speed ? ' · ' + fmtSize(e.speed) + '/秒' : ''}${e.source ? ' · ' + e.source : ''}`
+    $('updPct').textContent = pct ? pct.toFixed(0) + '%' : ''
+  } else if (e.phase === 'installing') {
+    $('updBarWrap').classList.add('indet'); $('updText').textContent = e.text || '正在安装…'; $('updPct').textContent = ''
+    show('updCancel', false)
+  }
+}
+
 async function openAbout() {
   const [info, notice] = await Promise.all([api.engineInfo(), api.notice()])
   openModal(`<div class="about-head"><img src="icon.png" alt=""><div><h2 style="margin:0">拾影 电脑版</h2><div>版本 ${esc(S.version)} · ${esc(S.os.label)}</div></div></div>
+    <div class="row-btns" style="margin-top:8px"><button id="aboutUpdate" class="ghost">检查更新</button></div>
     <h3>解析引擎</h3>
     <div class="kv"><span>yt-dlp</span><span>${esc(info.ytdlp || '未安装')}</span><span>ffmpeg</span><span>${esc(info.ffmpeg || '未安装')}</span>
       <span>Deno</span><span>${esc(info.deno || '未安装（只影响 YouTube）')}</span><span>位置</span><span style="word-break:break-all">${esc(info.binDir)}</span></div>
@@ -459,6 +566,7 @@ async function openAbout() {
     <h3>许可证</h3>
     <p>GPL-3.0（使用 yt-dlp、ffmpeg 等组件，第三方组件见下）。</p>
     <pre>${esc(notice || '')}</pre>`)
+  $('aboutUpdate').onclick = () => { closeModal(); checkUpdate(true) }
 }
 
 // ------------------------------------------------------------------ wiring
@@ -497,12 +605,14 @@ function wire() {
       case 'update': { toast('正在检查解析引擎更新…'); const r = await api.engineUpdate(); toast(r.message || (r.ok ? '解析引擎已是最新' : '更新失败'), 6000); break }
       case 'diag': { const ok = await api.diagCopy(); toast(ok ? '已复制诊断日志（已隐藏 cookies 和令牌）' : '已复制基本信息（还没有解析引擎日志）'); break }
       case 'data': api.openDataDir(); break
+      case 'checkUpdate': checkUpdate(true); break
+      case 'autoUpdate': S.settings = await api.setSetting('updateAuto', S.settings.updateAuto === false); renderSettings(); toast(S.settings.updateAuto !== false ? '已开启：启动时自动检查拾影新版本（最多 6 小时一次）' : '已关闭启动时自动检查更新（仍可在菜单里手动检查）', 4000); break
       case 'about': openAbout(); break
     }
   }
-  $('modalX').onclick = closeModal
-  $('modal').onclick = e => { if (e.target === $('modal')) closeModal() }
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); show('menu', false) } })
+  $('modalX').onclick = () => { if (!UP.running) closeModal() }
+  $('modal').onclick = e => { if (e.target === $('modal') && !UP.running) closeModal() }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!UP.running) closeModal(); show('menu', false) } })
 }
 
 wire()

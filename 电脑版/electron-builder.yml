@@ -24,7 +24,8 @@ win:
   target: [nsis, zip]
   icon: build/icon.ico
   executableName: 拾影
-  artifactName: 拾影-PC-${version}-win-${arch}.${ext}
+  # 发布文件名用英文（GitHub Releases 会把中文文件名改掉；内置更新的清单按这些名字找文件）
+  artifactName: Shiying-Windows-${version}-${arch}-portable.${ext}
 nsis:
   oneClick: false
   perMachine: false
@@ -37,7 +38,8 @@ nsis:
   createStartMenuShortcut: true
   shortcutName: 拾影
   uninstallDisplayName: 拾影 ${version}
-  artifactName: 拾影-Setup-${version}.${ext}
+  # 内置更新（1.2.0）：用 `/S --updated --force-run` 静默升级。appId、perMachine: false 不要改，否则旧版本不会被原地升级
+  artifactName: Shiying-Windows-Setup-${version}.${ext}
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico
   license: build/license-zh.txt
@@ -54,7 +56,7 @@ mac:
   # Electron 45 要求 macOS 12（Monterey）以上；ffmpeg arm64 / Deno 也要求 12.0
   minimumSystemVersion: "12.0"
   electronLanguages: [zh_CN, en]
-  artifactName: 拾影-${version}-mac-${arch}.${ext}
+  artifactName: Shiying-macOS-${version}-${arch}.${ext}
   extendInfo:
     CFBundleDisplayName: 拾影
     CFBundleName: 拾影

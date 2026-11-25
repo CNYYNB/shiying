@@ -29,8 +29,8 @@
 
 - 手机：`Shiying-Android-2.4-arm64-v8a.apk`（绝大多数手机装这个，Android 7 及以上）
 - 老的 32 位手机：`Shiying-Android-2.4-armeabi-v7a.apk`
-- Windows：`Shiying-Windows-Setup-1.1.1.exe`（Windows 10/11 64 位）
-- Mac（M 芯片）：`Shiying-macOS-1.1.1-arm64.zip`；Mac（Intel）：`Shiying-macOS-1.1.1-x64.zip`（macOS 12 及以上，安装步骤见 [电脑版/README.md](电脑版/README.md)）
+- Windows：`Shiying-Windows-Setup-1.2.0.exe`（Windows 10/11 64 位）
+- Mac（M 芯片）：`Shiying-macOS-1.2.0-arm64.zip`；Mac（Intel）：`Shiying-macOS-1.2.0-x64.zip`（macOS 12 及以上，安装步骤见 [电脑版/README.md](电脑版/README.md)）
 
 ## 支持哪些平台
 
@@ -63,6 +63,7 @@
 - 需要登录的平台可以在 App 内网页登录（cookie 只保存在本机，交给 yt-dlp 使用）
 - 手机版和电脑版都可登录 Telegram（用你自己的 api_id / api_hash，登录状态加密保存在本机），步骤见 [电脑版/README.md](电脑版/README.md)
 - 解析引擎 yt-dlp 可在应用内更新
+- 电脑版 / Mac 1.2.0 起内置更新：菜单「检查更新」，也会启动时自动检查，一键下载安装（1.1.1 需手动装一次 1.2.0）
 - 诊断日志一键复制（会去掉 cookie 和 token）
 
 ## 怎么用

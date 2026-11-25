@@ -36,6 +36,11 @@ contextBridge.exposeInMainWorld('shiying', {
   loginLogoutAll: () => inv('login-logout-all'),
   loginImport: n => inv('login-import', n),
   notice: () => inv('notice'),
+  updateCheck: () => inv('update-check'),
+  updateStart: () => inv('update-start'),
+  updateCancel: () => inv('update-cancel'),
+  updateOpenPage: () => inv('update-open-page'),
+  quitApp: () => inv('app-quit'),
   tgStatus: () => inv('tg-status'),
   tgSendCode: a => inv('tg-send-code', a),
   tgResend: () => inv('tg-resend'),
@@ -50,4 +55,6 @@ contextBridge.exposeInMainWorld('shiying', {
   onSetup: on('setup'),
   onHistoryChanged: on('history-changed'),
   onFocus: on('focus'),
+  onUpdate: on('update'),
+  onMenuCheckUpdate: on('menu-check-update'),
 })

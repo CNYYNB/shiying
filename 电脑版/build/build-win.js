@@ -43,6 +43,6 @@ async function prepareLinuxNsis() {
 const { build, Platform, Arch } = require('electron-builder')
 const targets = process.argv.slice(2).filter(a => !a.startsWith('-'))
 Promise.resolve(process.platform !== 'win32' && (targets.length === 0 || targets.includes('nsis')) ? prepareLinuxNsis() : null)
-  .then(() => build({ targets: Platform.WINDOWS.createTarget(targets.length ? targets : ['nsis', 'zip'], Arch.x64), config: 'electron-builder.yml' }))
+  .then(() => build({ targets: Platform.WINDOWS.createTarget(targets.length ? targets : ['nsis', 'zip'], Arch.x64), config: require('./config').builderConfig() }))
   .then(files => { console.log('完成：\n' + files.join('\n')) })
   .catch(e => { console.error(e); process.exit(1) })

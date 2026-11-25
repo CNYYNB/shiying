@@ -145,6 +145,13 @@ select { border: 2px solid var(--ink); border-radius: 6px; padding: 3px 6px; bac
 .tg-guide ol { margin: 8px 0 4px; padding-left: 22px; }
 .tg-guide li, .tg-guide p { line-height: 1.65; color: var(--ink); font-size: 13px; }
 .tg-guide code { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.upd-ver { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.upd-ver b { font-size: 26px; color: var(--red); letter-spacing: 1px; }
+.upd-ver span { color: var(--muted); font-size: 13px; }
+.upd-notes { white-space: pre-wrap; border: 2px solid var(--ink); border-radius: 8px; padding: 10px 12px; max-height: 240px; overflow-y: auto; line-height: 1.65; background: #fff; }
+.upd-warn { border: 2px solid var(--orange); background: #FFF6EE; border-radius: 8px; padding: 8px 12px; margin-top: 10px; line-height: 1.55; font-size: 13px; }
+.upd-ok { color: #0a7a2f; font-weight: 700; font-size: 16px; }
+.upd-btns { justify-content: flex-end; margin-top: 16px; }
 .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 9px 18px; border-radius: 8px; z-index: 60; max-width: 80vw; white-space: pre-wrap; }
 
 @media (max-width: 900px) {

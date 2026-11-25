@@ -1,7 +1,7 @@
 {
   "name": "shiying-pc",
   "productName": "拾影",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "拾影电脑版（Windows / macOS）：视频 / 图集下载器",
   "main": "src/main/main.js",
   "author": "Louis",
@@ -19,7 +19,9 @@
     "dist:mac": "node build/build-mac.js arm64 x64",
     "dist:mac-arm64": "node build/build-mac.js arm64",
     "dist:mac-x64": "node build/build-mac.js x64",
-    "verify:mac": "node tools/mac-verify.js"
+    "verify:mac": "node tools/mac-verify.js",
+    "verify:win": "node tools/win-verify.js",
+    "manifest": "node tools/make-pc-manifest.js"
   },
   "devDependencies": {
     "electron": "^45.5.0",
@@ -32,5 +34,12 @@
     "undici": "^7.30.2",
     "yauzl": "^3.4.0"
   },
-  "homepage": "https://github.com/CNYYNB/shiying"
+  "homepage": "https://github.com/CNYYNB/shiying",
+  "shiyingUpdate": {
+    "manifests": [
+      "https://shiying-louis.pages.dev/pc-version.json",
+      "https://raw.githubusercontent.com/CNYYNB/shiying/main/%E7%94%B5%E8%84%91%E7%89%88/update/pc-version.json",
+      "https://fastly.jsdelivr.net/gh/CNYYNB/shiying@main/%E7%94%B5%E8%84%91%E7%89%88/update/pc-version.json"
+    ]
+  }
 }

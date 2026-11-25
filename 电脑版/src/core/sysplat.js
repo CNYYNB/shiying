@@ -63,7 +63,7 @@ function secureStoreLabel(platform = cur()) {
 /**
  * macOS 应用菜单（中文）。Windows / Linux 返回 null（不显示菜单栏）。
  * 没有「编辑」菜单时 macOS 上 ⌘C / ⌘V 在输入框里不起作用，所以必须有。
- * opts: { appName, isDev, onHomepage }。返回 Menu.buildFromTemplate 用的模板。
+ * opts: { appName, isDev, onHomepage, onCheckUpdate }。返回 Menu.buildFromTemplate 用的模板。
  */
 function menuTemplate(platform = cur(), opts = {}) {
   if (platform !== 'darwin') return null
@@ -82,6 +82,7 @@ function menuTemplate(platform = cur(), opts = {}) {
       label: name,
       submenu: [
         { role: 'about', label: `关于${name}` },
+        { label: '检查更新…', click: () => opts.onCheckUpdate && opts.onCheckUpdate() },
         sep,
         { role: 'services', label: '服务' },
         sep,

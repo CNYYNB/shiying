@@ -4,16 +4,19 @@
 
 安卓版「拾影」2.3 的电脑版（Windows 和 Mac）：粘贴分享链接，自动识别平台，一键下载视频 / 图集到电脑。全中文界面。
 
-当前版本：**1.1.1**（新增：Mac 版，Apple 芯片和 Intel 都有；1.1.0 新增 Telegram 账号登录下载）
+当前版本：**1.2.0**（新增：内置更新——检查更新、一键下载安装；1.1.1 新增 Mac 版；1.1.0 新增 Telegram 账号登录下载）
 
 ## 下载哪个文件
 
 | 文件 | 说明 |
 |---|---|
-| `拾影-Setup-1.1.1.exe` | **Windows 推荐**。安装包：可选安装位置，创建桌面和开始菜单快捷方式，可在「设置 → 应用」里卸载 |
-| `拾影-PC-1.1.1-win-x64.zip` | Windows 便携版：解压到任意文件夹，双击 `拾影.exe` 运行，不写注册表 |
-| `拾影-1.1.1-mac-arm64.zip` | **Mac（Apple 芯片：M1 / M2 / M3 / M4…）** |
-| `拾影-1.1.1-mac-x64.zip` | **Mac（Intel 芯片）** |
+| `Shiying-Windows-Setup-1.2.0.exe` | **Windows 推荐**。安装包：可选安装位置，创建桌面和开始菜单快捷方式，可在「设置 → 应用」里卸载；支持内置一键更新 |
+| `Shiying-Windows-1.2.0-x64-portable.zip` | Windows 便携版：解压到任意文件夹，双击 `拾影.exe` 运行，不写注册表 |
+| `Shiying-macOS-1.2.0-arm64.zip` | **Mac（Apple 芯片：M1 / M2 / M3 / M4…）** |
+| `Shiying-macOS-1.2.0-x64.zip` | **Mac（Intel 芯片）** |
+
+1.2.0 起发布文件用英文文件名（GitHub 会把中文文件名改掉）；装好后仍然叫「拾影」。
+**从 1.1.1 或更早的版本升级**：旧版本没有内置更新，需要手动下载 1.2.0 安装一次（Windows 直接运行新安装包，会原地升级；Mac 把新的「拾影」拖进「应用程序」替换旧的）。登录状态、下载记录和设置都会保留。之后的新版本可以在拾影里一键更新。
 
 系统要求：Windows 10 / 11，64 位；macOS 12（Monterey）或更新。
 不知道自己的 Mac 是哪种芯片：点屏幕左上角的苹果图标 →「关于本机」，「芯片」写着 Apple M… 就选 arm64，「处理器」写着 Intel 就选 x64。
@@ -43,7 +46,7 @@ Mac 上的不同之处：
 
 ## 用法
 
-1. **安装**：Windows 双击 `拾影-Setup-1.1.1.exe`。安装包没有数字签名，Windows 可能提示「Windows 已保护你的电脑」，点「更多信息 → 仍要运行」。
+1. **安装**：Windows 双击 `Shiying-Windows-Setup-1.2.0.exe`。安装包没有数字签名，Windows 可能提示「Windows 已保护你的电脑」，点「更多信息 → 仍要运行」。
 2. **首次打开**：拾影会自动下载解析引擎（yt-dlp、ffmpeg、Deno，约 100 MB，只下载一次），窗口上方能看到进度。
    抖音、快手、小红书用拾影自带的解析，不等引擎下载完也能用。
 3. **下载作品**：在手机或网页上点「分享 → 复制链接」，切回拾影——拾影会自动识别剪贴板里的链接并解析
@@ -56,6 +59,17 @@ Mac 上的不同之处：
    - 更新解析引擎：平台改版导致解析失败时用（会检查 yt-dlp、ffmpeg、Deno）。拾影也会每 3 天自动检查一次。
    - 复制诊断日志：解析失败时复制最近一次解析引擎的完整日志（已隐藏 cookies 和令牌），方便反馈。
    - 打开数据文件夹：Windows `%APPDATA%\拾影`，Mac `~/Library/Application Support/拾影`（解析引擎、下载记录、登录信息都在这里）。
+   - **检查更新**：检查拾影本身有没有新版本（见下面「更新拾影」）。「启动时自动检查更新」可以打开 / 关闭。
+
+### 更新拾影（1.2.0 起）
+- 拾影每次启动后会悄悄检查一次新版本（最多每 6 小时一次；菜单里「启动时自动检查更新」可以关掉），也可以点「菜单 → 检查更新」（Mac：屏幕顶部「拾影 → 检查更新…」）。
+- 有新版本时会弹出窗口，显示版本号和更新内容：点「**立即更新**」开始下载（显示进度，可以「取消」，没下完的文件会删掉），点「以后再说」关闭。
+- 下载完会核对文件的 sha256 和大小，对不上就删掉并提示「校验失败」，不会安装。
+- **Windows 安装版**：拾影自动关闭，在后台安装到原来的位置（约 10–30 秒，看不到安装界面；如果当初选的是「所有用户」，会弹一次管理员确认），装好后自动重新打开。
+  **便携版**：会下载安装包并打开安装界面（之后用开始菜单里的拾影；数据和便携版共用）。
+- **Mac**：拾影自动替换「应用程序」里的拾影并重新打开。如果没有权限替换（比如拾影是用别的账户装的、或者直接从「下载」里运行），新版本会放到「下载 / 拾影新版本-x.y.z」并在访达里显示，按提示把它拖进「应用程序」替换即可。更新后钥匙串可能再问一次「拾影 Safe Storage」，点「始终允许」。
+- 登录状态（包括 Telegram）、下载记录、设置、解析引擎都保存在数据文件夹里，更新不会动它们。
+- 检查更新的地址按顺序试：拾影主页（Cloudflare Pages）→ GitHub → jsDelivr；下载文件来自 GitHub Releases（可能还有备用镜像）。提示「连接超时」「网络被拦截」时，请开启 VPN / 代理（拾影使用系统代理）后再试，或到主页手动下载。
 
 ### 支持平台
 
@@ -108,14 +122,16 @@ Mac 上的不同之处：
 
 ```
 npm install
-npm test                      # 单元测试（node:test，93 个）
+npm test                      # 单元测试（node:test，120 个）
 npm start                     # 开发运行（当前系统上）
-npm run dist                  # → dist/拾影-Setup-1.1.1.exe 和 dist/拾影-PC-1.1.1-win-x64.zip
+npm run dist                  # → dist/Shiying-Windows-Setup-1.2.0.exe 和 dist/Shiying-Windows-1.2.0-x64-portable.zip
 npm run dist:setup            # 只出安装包
 npm run dist:zip              # 只出便携版
-npm run dist:mac              # → dist/拾影-1.1.1-mac-arm64.zip 和 dist/拾影-1.1.1-mac-x64.zip（ad-hoc 签名）
+npm run dist:mac              # → dist/Shiying-macOS-1.2.0-arm64.zip 和 dist/Shiying-macOS-1.2.0-x64.zip（ad-hoc 签名）
 npm run dist:mac-arm64        # 只出 Apple 芯片版（dist:mac-x64 只出 Intel 版）
 npm run verify:mac            # 检查 Mac 包：Info.plist、app.asar、架构、签名、符号链接 → out/mac-smoke-report.txt
+npm run verify:win            # 检查 Windows 安装包和便携版：版本信息、内容、app.asar → out/win-smoke-report.txt
+npm run manifest              # 生成内置更新清单 update/pc-version.json（见下面「发布新版本」）
 ```
 
 Mac 版：`build/build-mac.js` 先用 electron-builder 生成 `拾影.app`，再做 ad-hoc 签名（Linux 上用 [rcodesign](https://github.com/indygreg/apple-platform-rs)（apple-codesign 0.29.0，找不到会自动下载到 `.cache/rcodesign/`），macOS 上用 `codesign -s -`），最后 `zip -y` 打包（保留符号链接）。没有 Apple Developer ID，所以没有公证。不出 .dmg（Linux 上没有可靠的 dmg 工具）。
@@ -127,6 +143,39 @@ Mac 版：`build/build-mac.js` 先用 electron-builder 生成 `拾影.app`，再
 联网冒烟测试（真实网站 + 真实 yt-dlp，可选下载）：`SHIYING_SMOKE_DL=1 npm run smoke`，结果写到 `out/smoke-report.txt`。
 
 图标：`build/icon.ico`、`build/icon.png`、Mac 的 `build/icon.icns` 都由安卓版的 `docs/icon-512.png`（即 `build/icon-512.png`）生成（`npm run icon`，需要 ImageMagick；icns 由 `build/make-icns.js` 写出）。
+
+## 发布新版本（内置更新）
+
+拾影启动时按顺序读这几个地址里的 `pc-version.json`（每个 6 秒超时，第一个能读到且格式正确的为准）：
+1. `https://shiying-louis.pages.dev/pc-version.json`（Cloudflare Pages）
+2. `https://raw.githubusercontent.com/CNYYNB/shiying/main/电脑版/update/pc-version.json`
+3. `https://fastly.jsdelivr.net/gh/CNYYNB/shiying@main/电脑版/update/pc-version.json`（jsDelivr 对分支最多缓存约 12 小时）
+
+地址列表在 `package.json` 的 `shiyingUpdate.manifests`（中文路径已 URL 编码）。构建时可以临时换掉：`SHIYING_UPDATE_MANIFESTS="https://a/pc-version.json,https://b/pc-version.json" npm run dist`。
+
+步骤（以 1.2.0 为例）：
+1. 改 `package.json` 的 `version`，写 `tools/notes-pc-<版本>.txt`（中文更新说明，显示在更新窗口里）。
+2. 构建并检查：`npm test && npm run dist && npm run dist:mac && npm run verify:win && npm run verify:mac`。
+3. 在 GitHub 仓库 `CNYYNB/shiying` 建 Release，tag `pc-<版本>`（例如 `pc-1.2.0`），上传 `dist/` 里的
+   `Shiying-Windows-Setup-<版本>.exe`、`Shiying-macOS-<版本>-arm64.zip`、`Shiying-macOS-<版本>-x64.zip`（便携版 zip 也可以一起传，内置更新不用它）。
+   文件名必须和上面一致；**上传后不要再重新构建**（sha256 会变）。
+4. 生成清单：`node tools/make-pc-manifest.js --version <版本> --tag pc-<版本>`
+   （有备用镜像，例如 R2 公开地址时加 `--mirror https://<你的 R2 公开域名>/pc-<版本>/`，可以加多个，按顺序尝试；
+   要求旧版本必须手动重装时加 `--min-version <版本>`）。写到 `update/pc-version.json`，里面有每个文件的大小和 sha256。
+   如果用了镜像，先把同样的三个文件传到镜像上。
+5. 发布清单（清单最后发：它一出现，用户就会开始更新）：
+   - 把 `update/pc-version.json` 推到 GitHub 仓库的 `电脑版/update/pc-version.json`（raw 和 jsDelivr 都从这里读）；
+   - 把同一个文件放到 Cloudflare Pages 网站根目录（`https://shiying-louis.pages.dev/pc-version.json`）并部署。
+6. 用旧版本点「检查更新」确认能看到新版本。
+
+清单格式（`update/pc-version.json`）：
+```json
+{ "schema": 1, "version": "1.2.0", "date": "2026-11-25", "notes": "更新说明…", "page": "https://shiying-louis.pages.dev/",
+  "minVersion": "可选：低于它的版本不能内置更新，只能打开下载页",
+  "win": { "x64":   { "name": "…exe", "url": "https://github.com/…/releases/download/pc-1.2.0/…", "mirrors": [], "sha256": "…", "size": 123 } },
+  "mac": { "arm64": { … }, "x64": { … } } }
+```
+地址必须是 https；`sha256` 和 `size` 必须和文件完全一致，否则拾影会拒绝安装。版本号按 semver 比较（`1.10.0` > `1.9.0`，`1.3.0-beta.1` < `1.3.0`）。
 
 ## 已知限制
 
@@ -141,7 +190,8 @@ Mac 版：`build/build-mac.js` 先用 electron-builder 生成 `拾影.app`，再
 - 首次运行需要联网下载约 100 MB 的解析引擎（GitHub 有国内加速镜像兜底，但不保证一直可用）。
 - **Telegram**：私聊和普通小群没有消息链接（见上面的转发办法）；不支持 HTTP 代理和 FakeTLS（ee）MTProxy；贴纸、语音、普通文件、付费内容不下载；一次只下一个任务，大文件速度受 Telegram 服务器限制。
 - 卸载时不会删除 `%APPDATA%\拾影` / `~/Library/Application Support/拾影`（解析引擎和下载记录），需要时手动删除。
-- 没有应用内自动更新（拾影本身的新版本需要重新下载安装包）。
+- 内置更新从 1.2.0 开始：1.1.1 及更早版本要手动装一次 1.2.0。更新包是完整安装包（约 110 MB），不是增量更新。
+- 内置更新没有在真 Windows / 真 Mac 上实际跑过（见 HANDOFF.md），第一次发布新版本时请先自己用旧版本试一次。
 
 ## 使用须知
 仅供个人学习与备份自己有权保存的内容。请遵守各平台的服务条款和当地法律，不要用于搬运、二次发布或侵犯他人版权。

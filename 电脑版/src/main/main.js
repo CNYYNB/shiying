@@ -24,6 +24,8 @@ const { TelegramAccount } = require('../core/telegram-account')
 const { TelegramService } = require('../core/telegram')
 const WebCapture = require('./webcapture')
 const SP = require('../core/sysplat')
+const { AppUpdater } = require('./updater-main')
+const PKG = require('../../package.json')
 
 const VERSION = app.getVersion()
 const isDev = !app.isPackaged
@@ -35,7 +37,7 @@ if (process.platform === 'win32') app.setAppUserModelId('com.louis.shiying.pc')
 let quitting = false // macOS：关窗口只隐藏（下载继续），⌘Q / 菜单退出才真正退出
 
 let win = null
-let dataDir, settings, history, tools, engine, cookies, tgAccount, tgService
+let dataDir, settings, history, tools, engine, cookies, tgAccount, tgService, updater
 const ICON = path.join(__dirname, '..', 'renderer', 'icon.png')
 
 function send(ch, payload) { if (win && !win.isDestroyed()) win.webContents.send(ch, payload) }
@@ -65,6 +67,7 @@ function init() {
   fs.mkdirSync(dataDir, { recursive: true })
   settings = new Settings(path.join(dataDir, 'settings.json'), {
     quality: Quality.DEFAULT, saveDir: SP.defaultSaveDir(app.getPath('downloads')), autoClipboard: true, engineUpdateAt: 0,
+    updateAuto: true, updateCheckAt: 0,
   })
   history = new History(path.join(dataDir, 'history.json'), { onDrop: e => { try { fs.rmSync(thumbFile(e.key), { force: true }) } catch {} } })
   history.fixStale()
@@ -78,6 +81,11 @@ function init() {
   Net.setProxyResolver(url => systemProxy(url))
   fs.rmSync(path.join(dataDir, 'tmp'), { recursive: true, force: true })
   initTelegram()
+  updater = new AppUpdater({
+    app, shell, settings, send, version: VERSION, pkg: PKG,
+    isBusy: () => !!current || queue.length > 0,
+    log: s => { if (process.env.SHIYING_DEBUG) console.log('[update]', s) },
+  })
 }
 
 // ------------------------------------------------------------------ Telegram（账号登录，GramJS）
@@ -123,7 +131,7 @@ function createWindow() {
     width: 1040, height: 780, minWidth: 780, minHeight: 600, title: '拾影', icon: ICON, backgroundColor: '#ffffff', show: false,
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true, spellcheck: false },
   })
-  const tpl = SP.menuTemplate(process.platform, { appName: '拾影', isDev, onHomepage: () => shell.openExternal('https://shiying-louis.pages.dev/') })
+  const tpl = SP.menuTemplate(process.platform, { appName: '拾影', isDev, onHomepage: () => shell.openExternal('https://shiying-louis.pages.dev/'), onCheckUpdate: () => { if (win) { win.show(); send('menu-check-update') } } })
   Menu.setApplicationMenu(tpl ? Menu.buildFromTemplate(tpl) : null)
   if (isMac) win.on('close', e => { if (!quitting) { e.preventDefault(); if (win.isFullScreen()) win.setFullScreen(false); win.hide() } })
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'))
@@ -392,10 +400,15 @@ function notify(title, body) {
 // ------------------------------------------------------------------ IPC
 
 const h = (ch, fn) => ipcMain.handle(ch, (_e, ...a) => fn(...a))
+let initOnce = false // 自动检查更新只在第一次打开界面时安排
 
 h('init', async () => {
   setTimeout(() => setupEngine().then(() => autoUpdate()), 300)
+  // 拾影本身的新版本：启动 8 秒后静默检查（最多 6 小时一次，可在菜单里关闭）
+  if (!initOnce) { initOnce = true; setTimeout(() => updater.check({ manual: false }).catch(() => {}), Number(process.env.SHIYING_UPDATE_DELAY || 8000)) }
+  const justUpdated = updater.consumeMarker()
   return {
+    justUpdated: justUpdated ? { from: justUpdated.from, to: justUpdated.to } : null,
     version: VERSION, settings: settings.all(), toolsStatus: tools.status(),
     qualities: Quality.keys.map(k => ({ key: k, label: Quality.menuLabel(k) })),
     current: current ? current.key : null,
@@ -424,7 +437,7 @@ h('choose-save-dir', async () => {
   settings.set('saveDir', r.filePaths[0]); return r.filePaths[0]
 })
 h('set-quality', q => { settings.set('quality', Quality.normalize(q)); return settings.get('quality') })
-h('set-setting', (k, v) => { if (['autoClipboard'].includes(k)) settings.set(k, v); return settings.all() })
+h('set-setting', (k, v) => { if (['autoClipboard', 'updateAuto'].includes(k)) settings.set(k, !!v); return settings.all() })
 h('copy-text', async t => { await clipboard.writeText(String(t || '')); return true })
 h('open-url', u => { if (/^https?:\/\//.test(u)) shell.openExternal(u) })
 h('engine-setup', () => setupEngine(false))
@@ -437,9 +450,10 @@ h('open-data-dir', () => shell.openPath(dataDir))
 h('diag-copy', async () => {
   const d = engine.lastDiagRedacted()
   const head = `拾影电脑版 ${VERSION} / ${SP.osLabel()} ${require('os').release()} / yt-dlp ${await tools.version('ytdlp') || '未安装'} / ffmpeg ${await tools.version('ffmpeg') || '未安装'} / Deno ${await tools.version('deno') || '未安装'}\n`
+  const up = updater.lines.length ? '\n\n----- 拾影更新 -----\n' + updater.diagText() : ''
   const tg = tgAccount.lines.length ? '\n\n----- Telegram（已隐藏 session、api_hash、手机号、验证码）-----\n' + tgAccount.diagText() : ''
-  await clipboard.writeText(head + (d || '（还没有解析引擎的日志：用 yt-dlp 解析一次链接后再复制）') + tg)
-  return !!d || !!tg
+  await clipboard.writeText(head + (d || '（还没有解析引擎的日志：用 yt-dlp 解析一次链接后再复制）') + tg + up)
+  return !!d || !!tg || !!up
 })
 h('login-status', () => cookies.status())
 h('login-open', async name => { const p = P.byName(name); if (!p) return false; const ok = await cookies.openLogin(p, win); return ok })
@@ -468,6 +482,13 @@ h('tg-cancel-login', tgCall(() => tgAccount.cancelLogin().then(() => ({}))))
 h('tg-logout', tgCall(forgetApi => tgAccount.logout({ forgetApi: !!forgetApi })))
 h('tg-set-proxy', tgCall(text => tgAccount.setProxy(text).then(() => ({}))))
 h('tg-test', tgCall(text => (text !== undefined ? tgAccount.setProxy(text) : Promise.resolve()).then(() => tgAccount.testConnection())))
+
+// 拾影本身的更新（菜单「检查更新」/ 启动时自动检查）
+h('update-check', () => updater.check({ manual: true }))
+h('update-start', () => updater.start())
+h('update-cancel', () => updater.cancel())
+h('update-open-page', () => shell.openExternal(updater.info?.manifest?.page || 'https://shiying-louis.pages.dev/'))
+h('app-quit', () => app.quit())
 
 h('notice', () => {
   for (const f of [path.join(process.resourcesPath || '', 'NOTICE.md'), path.join(__dirname, '..', '..', 'NOTICE.md')]) { try { return fs.readFileSync(f, 'utf8') } catch {} }

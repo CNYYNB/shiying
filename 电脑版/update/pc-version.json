@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "version": "1.2.0",
+  "date": "2026-11-25",
+  "notes": "新增内置更新：\n· 菜单「检查更新」，也会在启动时自动检查（最多 6 小时一次，可在菜单里关闭）\n· 发现新版本时显示版本号和更新内容，一键「立即更新」：自动下载、校验，再安装并重新打开拾影\n· 下载显示进度，可以随时取消（没下完的文件会删掉）\n· 多个更新地址轮流尝试，网络被拦截时会提示开启 VPN / 代理\n· 更新后登录状态（含 Telegram）、下载记录和设置都会保留\n· 发布文件改用英文文件名（Shiying-Windows-Setup-…exe、Shiying-macOS-…zip）",
+  "page": "https://shiying-louis.pages.dev/",
+  "win": {
+    "x64": {
+      "name": "Shiying-Windows-Setup-1.2.0.exe",
+      "url": "https://github.com/CNYYNB/shiying/releases/download/v2.4/Shiying-Windows-Setup-1.2.0.exe",
+      "mirrors": [
+        "https://pub-6239c39917f244328c1113da22f8ac5b.r2.dev/pc-1.2.0/Shiying-Windows-Setup-1.2.0.exe"
+      ],
+      "sha256": "f047ce0251eec74be9a3982376a03b4343b7e6806ae6940ab5931d1811976158",
+      "size": 113578139
+    }
+  },
+  "mac": {
+    "arm64": {
+      "name": "Shiying-macOS-1.2.0-arm64.zip",
+      "url": "https://github.com/CNYYNB/shiying/releases/download/v2.4/Shiying-macOS-1.2.0-arm64.zip",
+      "mirrors": [
+        "https://pub-6239c39917f244328c1113da22f8ac5b.r2.dev/pc-1.2.0/Shiying-macOS-1.2.0-arm64.zip"
+      ],
+      "sha256": "9e714c436dc2ba54ae59fff94048bce4bf05c0e9091745b8646bb3dbbcafeca0",
+      "size": 120114052
+    },
+    "x64": {
+      "name": "Shiying-macOS-1.2.0-x64.zip",
+      "url": "https://github.com/CNYYNB/shiying/releases/download/v2.4/Shiying-macOS-1.2.0-x64.zip",
+      "mirrors": [
+        "https://pub-6239c39917f244328c1113da22f8ac5b.r2.dev/pc-1.2.0/Shiying-macOS-1.2.0-x64.zip"
+      ],
+      "sha256": "78753d62516d3bc8f0d53c6b173c2fb0d8b224a2291bbd9d642eccb18dcebd87",
+      "size": 126218975
+    }
+  }
+}
