@@ -68,7 +68,9 @@
 2. 打开拾影，链接会自动填进去（也可以手动粘贴）。
 3. 看一眼预览，选画质，点下载。
 
-电脑版第一次运行会自动下载 yt-dlp、FFmpeg（以及 YouTube 需要的 Deno），国内会自动走镜像。更新 yt-dlp 和下载 YouTube 在国内一般需要开 VPN。
+电脑版第一次运行会自动下载 yt-dlp、FFmpeg（以及 YouTube 需要的 Deno），国内会自动走镜像。
+
+手机版下 YouTube 也需要 Deno 组件，App 内置了下载功能，第一次下 YouTube 时按提示在 App 里直接下载即可。更新 yt-dlp 和下载 YouTube 在国内一般需要开 VPN。
 
 > **YouTube 对网络 IP 要求较高**：节点要干净（没被大量共享或滥用），否则容易报「Sign in to confirm you’re not a bot」或下载失败。遇到这种情况先换一个节点再试。
 
