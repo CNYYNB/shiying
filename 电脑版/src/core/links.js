@@ -1,10 +1,11 @@
 'use strict'
 /** 从任意粘贴文字里找出受支持的链接 / 抖音作品 ID（移植自 Links.kt）。纯函数，可单测。 */
 const P = require('./platform')
+const TgS = require('./telegram-support')
 
 const URL_RE = /https?:\/\/[A-Za-z0-9\-._~:/?#[\]@!$&'()*+,;=%]+/g
 /** 不带 http 的链接（如 "b23.tv/xxxx"、"xhslink.cn/o/xxx"）：只认已知平台域名 */
-const BARE_RE = /(?<![A-Za-z0-9@./])((?:[A-Za-z0-9-]+\.)+(?:com|cn|tv|be|am|co|net|watch)\/[A-Za-z0-9\-._~:/?#[\]@!$&'()*+,;=%]+)/g
+const BARE_RE = /(?<![A-Za-z0-9@./])((?:[A-Za-z0-9-]+\.)+(?:com|cn|tv|be|am|co|net|watch|me|dog)\/[A-Za-z0-9\-._~:/?#[\]@!$&'()*+,;=%]+)/g
 const ID_RES = [
   /\/(?:video|note|slides|gallery|share\/video|share\/note|share\/slides|shipin|lvdetail|vsdetail)\/(\d{8,21})/,
   /[?&#](?:modal_id|aweme_id|item_id|vid|group_id)=(\d{8,21})/,
@@ -25,6 +26,8 @@ function allUrls(text) {
   const t = String(text || '')
   const withScheme = [...t.matchAll(URL_RE)].map(m => trimTail(m[0]))
   if (withScheme.length) return withScheme
+  const tg = TgS.tgSchemeToHttps(t) // tg://resolve?domain=…&post=… / tg://privatepost?…
+  if (tg) return [tg]
   return [...t.matchAll(BARE_RE)].map(m => 'https://' + trimTail(m[1])).filter(u => P.ofUrl(u) !== P.Platform.OTHER)
 }
 

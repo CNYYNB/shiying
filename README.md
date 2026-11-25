@@ -4,7 +4,7 @@
 
 # 拾影
 
-**粘贴链接就能下载视频 · Android + Windows**
+**粘贴链接就能下载视频 · Android + Windows + macOS**
 
 抖音、快手、小红书、TikTok、X、B 站、YouTube、微博、Instagram……把分享链接贴进来，自动识别平台，一键保存。<br>
 免费 · 开源 · 无广告 · 不用注册
@@ -29,7 +29,8 @@
 
 - 手机：`Shiying-Android-2.3-arm64-v8a.apk`（绝大多数手机装这个，Android 7 及以上）
 - 老的 32 位手机：`Shiying-Android-2.3-armeabi-v7a.apk`
-- 电脑：`Shiying-Windows-Setup-1.0.0.exe`（Windows 10/11 64 位）
+- Windows：`Shiying-Windows-Setup-1.1.1.exe`（Windows 10/11 64 位）
+- Mac（M 芯片）：`Shiying-macOS-1.1.1-arm64.zip`；Mac（Intel）：`Shiying-macOS-1.1.1-x64.zip`（macOS 12 及以上，安装步骤见 [电脑版/README.md](电脑版/README.md)）
 
 ## 支持哪些平台
 
@@ -47,6 +48,7 @@
 | Instagram | yt-dlp | ✅ 能下 | 易限流 |
 | Facebook | yt-dlp | 未测 | |
 | Vimeo | yt-dlp | 未测 | 常需登录 |
+| Telegram | 账号登录（电脑版）/ yt-dlp | 未测登录 | 不登录只能下公开频道；登录后可下私密频道、超级群、评论、相册；禁止保存内容的不下 |
 | 其他网站 | yt-dlp | — | yt-dlp 支持的都行 |
 
 「未测」是作者的测试环境（海外 IP）被平台拦截、没能实测，不代表不能用。欢迎在 Issues 里反馈你的结果。
@@ -59,6 +61,7 @@
 - 画质可选（最高 / 1080p / 720p / 480p / 360p / 省流量）
 - 下载记录、取消下载、进度显示；手机版直接存进相册
 - 需要登录的平台可以在 App 内网页登录（cookie 只保存在本机，交给 yt-dlp 使用）
+- 电脑版可登录 Telegram（用你自己的 api_id / api_hash，登录状态加密保存在本机），步骤见 [电脑版/README.md](电脑版/README.md)
 - 解析引擎 yt-dlp 可在应用内更新
 - 诊断日志一键复制（会去掉 cookie 和 token）
 
@@ -84,7 +87,7 @@
 
 ```
 手机版/   Android（Kotlin，youtubedl-android = yt-dlp + Python + FFmpeg）
-电脑版/   Windows（Electron + Node.js，调用 yt-dlp / FFmpeg / Deno）
+电脑版/   Windows + macOS（Electron + Node.js，调用 yt-dlp / FFmpeg / Deno；Telegram 用 GramJS）
 ```
 
 ### 编译手机版
@@ -105,6 +108,8 @@ cd 电脑版
 npm install
 npm start        # 运行
 npm run dist     # 打包 Windows 安装程序
+npm run dist:mac # 打包 macOS（arm64 + x64）
+npm test         # 运行测试
 ```
 
 ## 许可证

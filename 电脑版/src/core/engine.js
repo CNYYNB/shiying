@@ -14,15 +14,16 @@ const Quality = require('./quality')
 const { Platform } = require('./platform')
 const { UserError, Cancelled } = require('./post')
 
-const isWin = process.platform === 'win32'
+const SP = require('./sysplat')
 const FAIL_UPDATE_EVERY_MS = 6 * 3600 * 1000
 
-/** 结束进程及其子进程（yt-dlp 会启动 ffmpeg） */
+/** 结束进程及其子进程（yt-dlp 会启动 ffmpeg）。Windows：taskkill /T /F；macOS / Linux：向进程组发 SIGKILL */
 function killTree(child) {
   if (!child || child.exitCode != null) return
   try {
-    if (isWin) execFile('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true }, () => {})
-    else process.kill(-child.pid, 'SIGKILL')
+    const k = SP.killPlan(child.pid)
+    if (k.type === 'exec') execFile(k.cmd, k.args, { windowsHide: true }, () => {})
+    else process.kill(k.pid, k.signal)
   } catch { try { child.kill('SIGKILL') } catch {} }
 }
 
@@ -57,7 +58,7 @@ class Engine {
     return new Promise((resolve, reject) => {
       if (signal?.aborted) return reject(new Cancelled())
       const child = spawn(this.tools.ytdlpPath, [...this.baseArgs(), ...args], {
-        windowsHide: true, detached: !isWin,
+        windowsHide: true, detached: SP.spawnDetached(),
         env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' },
       })
       if (jobId) this.procs.set(jobId, child)
@@ -157,7 +158,7 @@ class Engine {
     const fail = r => { diag.finish('失败'); throw new UserError(Y.errorMessage(r.err, Platform.YOUTUBE)) }
     const done = r => { diag.finish('成功'); return { json: r.out, args: netArgs } }
 
-    // 1. 和 YTDLnis 默认一样（Windows 上 yt-dlp 自己会读系统代理设置）
+    // 1. 和 YTDLnis 默认一样（yt-dlp 自己会读系统代理设置：Windows 注册表 / macOS SystemConfiguration）
     let r = await attempt('默认（同 YTDLnis）', [])
     if (ok(r)) return done(r)
     if (Y.netProblem(r.err)) {

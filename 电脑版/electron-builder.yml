@@ -8,6 +8,11 @@ files:
   - src/**/*
   - package.json
   - "!**/*.map"
+  - "!**/node_modules/**/*.d.ts"
+  - "!**/node_modules/{bufferutil,utf-8-validate}/{src,binding.gyp}"
+# GramJS 的依赖 websocket 带两个可选原生模块（bufferutil / utf-8-validate）：它们自带 win32 预编译文件，
+# 加载不了时会用纯 JS 版本（拾影用 TCP 连接，根本不走 websocket）。Linux 上不能交叉编译，所以不重编译原生模块。
+npmRebuild: false
 extraResources:
   - from: LICENSE
     to: LICENSE.txt
@@ -36,3 +41,23 @@ nsis:
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico
   license: build/license-zh.txt
+# macOS（在 Linux 上用 build/build-mac.js 构建：electron-builder 出 .app → rcodesign ad-hoc 签名 → zip -y 保留符号链接）
+mac:
+  target: [dir]
+  icon: build/icon.icns
+  category: public.app-category.utilities
+  executableName: 拾影
+  # 没有 Apple Developer ID：electron-builder 不签名，由 build-mac.js 用 rcodesign 做 ad-hoc 签名（不公证）
+  identity: null
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  # Electron 45 要求 macOS 12（Monterey）以上；ffmpeg arm64 / Deno 也要求 12.0
+  minimumSystemVersion: "12.0"
+  electronLanguages: [zh_CN, en]
+  artifactName: 拾影-${version}-mac-${arch}.${ext}
+  extendInfo:
+    CFBundleDisplayName: 拾影
+    CFBundleName: 拾影
+    CFBundleDevelopmentRegion: zh_CN
+    NSHumanReadableCopyright: Copyright © 2026 Louis · GPL-3.0
+    LSApplicationCategoryType: public.app-category.utilities

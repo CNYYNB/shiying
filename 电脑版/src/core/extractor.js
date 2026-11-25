@@ -10,10 +10,16 @@ const Douyin = require('./douyin')
 const Kuaishou = require('./kuaishou')
 const Xhs = require('./xhs')
 const Y = require('./ytdlp-support')
+const TgS = require('./telegram-support')
 const { UserError } = require('./post')
 
-/** → { type:'native', post } | { type:'ytdlp', url, platform } */
-async function route(text, log = () => {}) {
+const TG_NEED_LOGIN = '这是私密频道 / 群组（或评论区）的消息链接，需要先登录 Telegram：点右上角「登录」→「Telegram 账号登录」'
+
+/**
+ * → { type:'native', post } | { type:'ytdlp', url, platform }
+ * opts.telegram：{ loggedIn(): boolean|Promise, resolve(link, log): Promise<post> }（主进程提供；没有时 Telegram 只能走 yt-dlp）
+ */
+async function route(text, log = () => {}, opts = {}) {
   const platform = Links.detect(text)
   if (!platform) throw new UserError('没有找到链接。请在 App 里点「分享 → 复制链接」，再粘贴到这里')
   switch (platform.name) {
@@ -24,6 +30,15 @@ async function route(text, log = () => {}) {
         if (e instanceof Xhs.XhsNoData) { log('页面没有笔记数据，改用解析引擎…'); return { type: 'ytdlp', url: e.url, platform } }
         throw e
       }
+    case 'TELEGRAM': {
+      let link
+      try { link = TgS.parseLink(Links.findUrl(text)) } catch (e) { throw new UserError(e.message) }
+      const tg = opts.telegram
+      if (tg && await tg.loggedIn()) return { type: 'native', post: await tg.resolve(link, log) }
+      if (!link.publicFallback) throw new UserError(TG_NEED_LOGIN)
+      log('没有登录 Telegram，用解析引擎试公开频道…')
+      return { type: 'ytdlp', url: telegramFallbackUrl(link), platform, telegramFallback: true }
+    }
     default: {
       let url = Links.findUrl(text)
       if (Y.needsExpand(url)) {
@@ -37,4 +52,9 @@ async function route(text, log = () => {}) {
   }
 }
 
-module.exports = { route }
+/** 不登录时交给 yt-dlp 的公开频道链接（yt-dlp 只认 t.me/频道/消息号） */
+function telegramFallbackUrl(link) {
+  return `https://t.me/${link.username}/${link.msgId}${link.single ? '?single' : ''}`
+}
+
+module.exports = { route, telegramFallbackUrl, TG_NEED_LOGIN }

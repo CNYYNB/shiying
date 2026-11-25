@@ -15,7 +15,7 @@ const Net = require('../core/net')
 
 const PARTITION = 'persist:shiying-login'
 /** 登录窗口用普通 Chrome 的 UA（去掉 Electron / 拾影 字样，Google 才肯让登录） */
-const CHROME_UA = () => `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36`
+const CHROME_UA = () => require('../core/sysplat').chromeUA(process.versions.chrome)
 
 class Cookies {
   constructor(dataDir) {

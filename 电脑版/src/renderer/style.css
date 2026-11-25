@@ -134,6 +134,17 @@ select { border: 2px solid var(--ink); border-radius: 6px; padding: 3px 6px; bac
 .login-row .st { font-size: 12px; color: var(--muted); flex: 1; }
 .login-row .st.on { color: #0a7a2f; font-weight: 700; }
 .login-row button { padding: 3px 10px; font-size: 13px; }
+.tg-row { border-bottom: 2px solid var(--red); margin-bottom: 4px; }
+.tg-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 13px; margin-top: 10px; }
+.tg-form input { border: 2px solid var(--ink); border-radius: 8px; padding: 7px 10px; font-weight: 500; background: #fff; }
+.tg-form input:focus-visible { outline: 3px solid var(--orange); outline-offset: 1px; }
+.tg-note { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+.tg-ok { color: #0a7a2f; font-weight: 700; }
+.tg-guide { border: 2px solid var(--red); background: var(--red-soft); border-radius: 8px; padding: 8px 12px; margin: 8px 0; }
+.tg-guide summary { font-weight: 700; color: var(--red-dark); cursor: pointer; }
+.tg-guide ol { margin: 8px 0 4px; padding-left: 22px; }
+.tg-guide li, .tg-guide p { line-height: 1.65; color: var(--ink); font-size: 13px; }
+.tg-guide code { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
 .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 9px 18px; border-radius: 8px; z-index: 60; max-width: 80vw; white-space: pre-wrap; }
 
 @media (max-width: 900px) {

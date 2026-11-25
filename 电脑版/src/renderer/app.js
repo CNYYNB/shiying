@@ -4,7 +4,7 @@ const api = window.shiying
 const $ = id => document.getElementById(id)
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
-const S = { version: '', settings: {}, qualities: [], post: null, jobs: {}, postJob: null, lastClip: '', parsing: false }
+const S = { os: { platform: 'win32', label: 'Windows', pasteKey: 'Ctrl+V', telegramDir: '%APPDATA%\\拾影\\telegram' }, version: '', settings: {}, qualities: [], post: null, jobs: {}, postJob: null, lastClip: '', parsing: false }
 
 const NOTICE_TEXT = '仅供个人学习与备份自己有权保存的内容。请遵守各平台的服务条款和当地法律，不要用于搬运、二次发布或侵犯他人版权。'
 
@@ -38,6 +38,7 @@ function show(el, on) { (typeof el === 'string' ? $(el) : el).classList.toggle('
 async function init() {
   const r = await api.init()
   S.version = r.version; S.settings = r.settings; S.qualities = r.qualities
+  if (r.os) { S.os = r.os; $('input').placeholder = $('input').placeholder.replace('Ctrl+V', r.os.pasteKey); document.documentElement.dataset.os = r.os.platform }
   renderSettings()
   renderHistory()
   api.onParseLog(t => { $('statusText').textContent = t })
@@ -131,13 +132,17 @@ function renderPreview() {
   const p = S.post
   if (!p) { show('preview', false); return }
   show('preview', true)
-  $('pvPlatform').textContent = p.platformLabel + (p.source ? ' · ' + (p.engine === 'ytdlp' ? '解析引擎' : '原生解析（无水印）') : '')
+  $('pvPlatform').textContent = p.platformLabel + (p.source ? ' · ' + (p.engine === 'ytdlp' ? '解析引擎' : p.engine === 'telegram' ? '账号登录下载' : '原生解析（无水印）') : '')
   $('pvTitle').textContent = p.title
   $('pvAuthor').textContent = p.author ? '@' + p.author : ''
-  $('pvBadge').textContent = p.isImages ? '图集' : (p.entries > 1 ? `${p.entries} 个视频` : '')
+  $('pvBadge').textContent = p.engine === 'telegram' ? (p.entries > 1 ? '相册' : '') : p.isImages ? '图集' : (p.entries > 1 ? `${p.entries} 个视频` : '')
   $('pvDur').textContent = p.durationText || ''
   const meta = []
-  if (p.isImages) { meta.push(`${p.images.length} 张图片`); if (p.liveCount) meta.push(`含 ${p.liveCount} 个实况`) }
+  if (p.engine === 'telegram') {
+    meta.push(p.tg?.summary || '')
+    if (p.shownHeight) meta.push(`${p.shownHeight}p`)
+    if (p.tg?.totalSize) meta.push('约 ' + fmtSize(p.tg.totalSize))
+  } else if (p.isImages) { meta.push(`${p.images.length} 张图片`); if (p.liveCount) meta.push(`含 ${p.liveCount} 个实况`) }
   else {
     const h = p.qualityOverride ? Number(p.qualityOverride) : p.shownHeight
     if (h) meta.push(`${h}p`)
@@ -291,9 +296,12 @@ function openModal(html) { $('modalBody').innerHTML = html; show('modal', true) 
 function closeModal() { show('modal', false); $('modalBody').innerHTML = '' }
 
 async function openLogin() {
-  const st = await api.loginStatus()
+  const [st, tg] = await Promise.all([api.loginStatus(), api.tgStatus()])
   openModal(`<h2>登录平台账号（可选）</h2>
     <p>大部分作品不用登录就能下载。遇到「需要登录」「年龄限制」或想要 B 站 1080p 时再登录。登录状态只保存在这台电脑上。</p>
+    <div class="login-row tg-row"><b>Telegram</b>
+      <span class="st ${tg.loggedIn ? 'on' : ''}">${tg.loggedIn ? '已登录' + (tg.name || tg.username ? '：' + esc(tg.name || '@' + tg.username) : '') : '未登录（私密频道 / 群组需要登录）'}</span>
+      <button id="tgOpen" class="primary">${tg.loggedIn ? 'Telegram 设置' : 'Telegram 账号登录'}</button>${tg.loggedIn ? '<button id="tgOutQuick" class="ghost">退出 Telegram 登录</button>' : ''}</div>
     <div id="loginList">${st.map(s => `<div class="login-row" data-n="${s.name}"><b>${esc(s.label)}</b>
       <span class="st ${s.loggedIn ? 'on' : ''}">${s.loggedIn ? (s.imported ? '已导入 cookies' : '已登录') : '未登录'}</span>
       <button data-l="open">网页登录</button><button data-l="import" class="ghost">导入 cookies.txt</button>${s.loggedIn ? '<button data-l="out" class="ghost">退出</button>' : ''}</div>`).join('')}</div>
@@ -307,16 +315,145 @@ async function openLogin() {
     if (b.dataset.l === 'out') { await api.loginLogout(n); toast('已退出'); openLogin() }
   }
   $('logoutAll').onclick = async () => { await api.loginLogoutAll(); toast('已退出全部登录'); openLogin() }
+  $('tgOpen').onclick = () => openTelegram()
+  if ($('tgOutQuick')) $('tgOutQuick').onclick = () => tgLogout(openLogin)
+}
+
+// ------------------------------------------------------------------ Telegram 登录
+
+const TG_GUIDE = `<details class="tg-guide"><summary>怎么获取 api_id 和 api_hash？（只需要做一次）</summary><ol>
+  <li>用浏览器打开 <a href="#" data-url="https://my.telegram.org">my.telegram.org</a>（需要能访问 Telegram 的网络）。</li>
+  <li>输入你的 Telegram 手机号（带区号，如 <b>+86</b>13800138000），点 <b>Next</b>。</li>
+  <li>验证码会发到你手机上的 <b>Telegram App</b> 里（「Telegram」官方账号发来的消息，不是短信），填到网页上，点 <b>Sign In</b>。</li>
+  <li>点 <b>API development tools</b>。</li>
+  <li>第一次会让你创建应用：<b>App title</b> 填 <code>shiying</code>，<b>Short name</b> 填 <code>shiyingpc</code>（5–32 位英文字母或数字），<b>Platform</b> 选 <b>Desktop</b>，其他留空，点 <b>Create application</b>。<br>提示「ERROR」时：换个代理节点、关掉广告拦截插件，或过一会儿再试。</li>
+  <li>把页面上的 <b>App api_id</b>（一串数字）和 <b>App api_hash</b>（32 位字母数字）复制到下面。</li>
+</ol><p>api_id / api_hash 只属于你的账号，不要发给别人。拾影只把它们和登录状态加密保存在这台电脑上（__TGDIR__）。</p></details>`
+
+const TG_PROXY_HINT = '留空 = 跟随系统代理（Clash / v2rayN 开「系统代理」即可）；或填 socks5://127.0.0.1:7890、MTProxy 链接（tg://proxy?…）'
+
+const TG = { step: 'form', hint: '', viaApp: true }
+
+function tgBusy(on, text) {
+  for (const b of document.querySelectorAll('#tgBox button')) b.disabled = on
+  show('tgBusy', on); if (text) $('tgBusyText').textContent = text
+  if (on) show('tgErr', false)
+}
+function tgError(msg) { $('tgErr').textContent = msg; show('tgErr', true) }
+
+async function tgLogout(after) {
+  if (!confirm('退出 Telegram 登录？\n会通知 Telegram 结束这个会话，并删除这台电脑上保存的登录状态（api_id / api_hash 和代理设置会保留）。')) return
+  toast('正在退出 Telegram 登录…')
+  const r = await api.tgLogout(false)
+  TG.step = 'form'
+  toast(r.ok ? (r.remote ? '已退出 Telegram 登录' : '已删除本机的 Telegram 登录（没连上 Telegram，可以在手机「设置 → 设备」里结束「拾影 PC」会话）') : r.error, 6000)
+  after ? after() : openTelegram()
+}
+
+async function openTelegram() {
+  const st = await api.tgStatus()
+  if (!st.pending && TG.step !== 'form') TG.step = 'form'
+  const proxyBlock = `<label>代理（国内需要）<input id="tgProxy" type="text" spellcheck="false" value="${esc(st.proxy)}" placeholder="socks5://127.0.0.1:7890"></label>
+    <div class="tg-note">${esc(TG_PROXY_HINT)}。当前：${esc(st.proxyDesc)}${st.via ? '；上次连接方式：' + esc(st.via) : ''}</div>`
+  const enc = st.encryption ? '' : '<div class="err">这台电脑不能加密保存登录信息，关闭拾影后需要重新登录。</div>'
+  let body
+  if (st.loggedIn) {
+    body = `<p class="tg-ok">✓ 已登录${st.name || st.username ? '：<b>' + esc(st.name || '') + '</b>' + (st.username ? ' @' + esc(st.username) : '') : ''}</p>
+      <p>直接粘贴 Telegram 消息链接（右键消息 →「复制消息链接」）就能下载。登录状态加密保存在这台电脑上。</p>${enc}
+      ${proxyBlock}
+      <div class="row-btns"><button id="tgSaveProxy">保存代理</button><button id="tgTest" class="ghost">测试连接</button><span class="grow"></span><button id="tgLogout" class="danger">退出 Telegram 登录</button></div>`
+  } else if (TG.step === 'code') {
+    body = `<p>验证码已发到${TG.viaApp ? '你手机 / 电脑上的 <b>Telegram App</b>（「Telegram」官方账号的消息）' : '你的手机<b>短信</b>'}。</p>
+      <label>验证码<input id="tgCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="5 位数字"></label>
+      <div class="row-btns"><button id="tgBack" class="ghost">返回修改</button><button id="tgResend" class="ghost">重新发送验证码</button><span class="grow"></span><button id="tgSignIn" class="primary">登录</button></div>`
+  } else if (TG.step === 'password') {
+    body = `<p>这个账号开了<b>两步验证</b>，请输入两步验证密码（不是验证码）。${TG.hint ? '<br>密码提示：' + esc(TG.hint) : ''}</p>
+      <label>两步验证密码<input id="tgPw" type="password" autocomplete="current-password"></label>
+      <div class="row-btns"><button id="tgBack" class="ghost">返回</button><span class="grow"></span><button id="tgPwBtn" class="primary">登录</button></div>`
+  } else {
+    body = `<p>登录你自己的 Telegram 账号后，你账号能看到的消息（公开频道、私密频道、群组、评论）里的视频和图片都可以下载。</p>
+      ${TG_GUIDE.replace("__TGDIR__", esc(S.os.telegramDir))}${enc}
+      <label>api_id<input id="tgApiId" type="text" inputmode="numeric" spellcheck="false" value="${esc(st.apiId)}" placeholder="例如 1234567"></label>
+      <label>api_hash<input id="tgApiHash" type="password" spellcheck="false" autocomplete="off" placeholder="${st.hasApiHash ? '已保存（不用重新填；要换就填新的）' : '32 位字母和数字'}"></label>
+      <label>手机号<input id="tgPhone" type="tel" spellcheck="false" placeholder="+8613800138000（国内号码可以不写 +86）"></label>
+      ${proxyBlock}
+      <div class="row-btns"><button id="tgTest" class="ghost">测试连接</button><span class="grow"></span><button id="tgSend" class="primary">发送验证码</button></div>`
+  }
+  openModal(`<h2>Telegram 账号登录</h2><div id="tgBox" class="tg-form">${body}
+    <div id="tgBusy" class="status hidden"><span class="spin"></span><span id="tgBusyText"></span></div>
+    <div id="tgErr" class="err hidden"></div>
+    <div class="row-btns small"><a href="#" id="tgBackLogin">← 返回登录列表</a></div></div>`)
+  for (const a of document.querySelectorAll('#tgBox [data-url]')) a.onclick = e => { e.preventDefault(); api.openUrl(a.dataset.url) }
+  $('tgBackLogin').onclick = e => { e.preventDefault(); openLogin() }
+  const proxyVal = () => ($('tgProxy') ? $('tgProxy').value.trim() : undefined)
+  const done = r => {
+    if (!r.ok) { tgBusy(false); tgError(r.error); return false }
+    return true
+  }
+  if ($('tgTest')) $('tgTest').onclick = async () => {
+    tgBusy(true, '正在连接 Telegram…')
+    const r = await api.tgTest(proxyVal())
+    if (!done(r)) return
+    tgBusy(false); toast('连接成功：' + r.via, 4000); openTelegram()
+  }
+  if ($('tgSaveProxy')) $('tgSaveProxy').onclick = async () => {
+    const r = await api.tgSetProxy(proxyVal())
+    if (!done(r)) return
+    toast('已保存代理设置'); openTelegram()
+  }
+  if ($('tgLogout')) $('tgLogout').onclick = () => tgLogout()
+  if ($('tgSend')) $('tgSend').onclick = async () => {
+    const a = { apiId: $('tgApiId').value.trim(), apiHash: $('tgApiHash').value.trim(), phone: $('tgPhone').value.trim(), proxy: proxyVal() }
+    if (!a.apiId) return tgError('请填 api_id（获取方法见上面的说明）')
+    if (!a.apiHash && !st.hasApiHash) return tgError('请填 api_hash（获取方法见上面的说明）')
+    if (!a.phone) return tgError('请填手机号')
+    tgBusy(true, '正在连接 Telegram 并发送验证码…')
+    const r = await api.tgSendCode(a)
+    if (!done(r)) return
+    TG.step = 'code'; TG.viaApp = r.viaApp
+    await openTelegram(); $('tgCode')?.focus()
+  }
+  if ($('tgResend')) $('tgResend').onclick = async () => {
+    tgBusy(true, '正在重新发送验证码…')
+    const r = await api.tgResend()
+    if (!done(r)) return
+    tgBusy(false); TG.viaApp = r.viaApp; toast('已重新发送验证码')
+  }
+  const finish = r => { TG.step = 'form'; toast('Telegram 登录成功' + (r.name ? '：' + r.name : '') + (r.saved === false ? '（这台电脑不能加密保存，关闭拾影后需要重新登录）' : ''), 5000); openTelegram() }
+  if ($('tgSignIn')) {
+    const go = async () => {
+      tgBusy(true, '正在登录…')
+      const r = await api.tgSignIn($('tgCode').value)
+      if (!done(r)) { if (r.kind === 'auth_code_expired') show('tgResend', true); return }
+      if (r.step === 'password') { TG.step = 'password'; TG.hint = r.hint || ''; await openTelegram(); $('tgPw')?.focus(); return }
+      finish(r)
+    }
+    $('tgSignIn').onclick = go
+    $('tgCode').onkeydown = e => { if (e.key === 'Enter') go() }
+  }
+  if ($('tgPwBtn')) {
+    const go = async () => {
+      tgBusy(true, '正在验证两步验证密码…')
+      const pw = $('tgPw').value
+      $('tgPw').value = ''
+      const r = await api.tgPassword(pw)
+      if (!done(r)) return
+      finish(r)
+    }
+    $('tgPwBtn').onclick = go
+    $('tgPw').onkeydown = e => { if (e.key === 'Enter') go() }
+  }
+  if ($('tgBack')) $('tgBack').onclick = async () => { await api.tgCancelLogin(); TG.step = 'form'; openTelegram() }
 }
 
 async function openAbout() {
   const [info, notice] = await Promise.all([api.engineInfo(), api.notice()])
-  openModal(`<div class="about-head"><img src="icon.png" alt=""><div><h2 style="margin:0">拾影 电脑版</h2><div>版本 ${esc(S.version)} · Windows</div></div></div>
+  openModal(`<div class="about-head"><img src="icon.png" alt=""><div><h2 style="margin:0">拾影 电脑版</h2><div>版本 ${esc(S.version)} · ${esc(S.os.label)}</div></div></div>
     <h3>解析引擎</h3>
     <div class="kv"><span>yt-dlp</span><span>${esc(info.ytdlp || '未安装')}</span><span>ffmpeg</span><span>${esc(info.ffmpeg || '未安装')}</span>
       <span>Deno</span><span>${esc(info.deno || '未安装（只影响 YouTube）')}</span><span>位置</span><span style="word-break:break-all">${esc(info.binDir)}</span></div>
     <h3>支持平台</h3>
-    <p><b>原生解析：</b>抖音（无水印）、快手、小红书（视频 + 图集）<br><b>yt-dlp 解析：</b>哔哩哔哩、微博、西瓜视频 / 今日头条、YouTube（含 Shorts）、TikTok、Instagram、X / Twitter、Facebook、Vimeo 及 yt-dlp 支持的其他网站<br><b>不支持：</b>视频号、直播、私密 / 仅好友 / 已删除内容、会员专享内容</p>
+    <p><b>原生解析：</b>抖音（无水印）、快手、小红书（视频 + 图集）<br><b>Telegram：</b>登录自己的账号后下载公开频道、私密频道、群组、评论里的视频 / 图片 / 相册（不登录时公开频道用 yt-dlp）；禁止保存内容的频道 / 聊天不下载<br><b>yt-dlp 解析：</b>哔哩哔哩、微博、西瓜视频 / 今日头条、YouTube（含 Shorts）、TikTok、Instagram、X / Twitter、Facebook、Vimeo 及 yt-dlp 支持的其他网站<br><b>不支持：</b>视频号、直播、私密 / 仅好友 / 已删除内容、会员专享内容</p>
     <h3>使用须知</h3>
     <p>${esc(NOTICE_TEXT)}</p>
     <h3>许可证</h3>

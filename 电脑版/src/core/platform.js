@@ -1,7 +1,7 @@
 'use strict'
 /**
  * 支持的平台（移植自安卓版 Platform.kt）。hosts 按后缀匹配链接的域名。
- * engine: "douyin" / "kuaishou" / "xhs" = 原生解析，"ytdlp" = yt-dlp。
+ * engine: "douyin" / "kuaishou" / "xhs" = 原生解析，"telegram" = Telegram 账号登录（GramJS / MTProto），"ytdlp" = yt-dlp。
  * loginUrl: 可选的网页登录（cookies 导出给 yt-dlp / 原生解析）。
  */
 const def = (name, label, hosts, engine, loginUrl = null, sessionCookies = [], cookieDomains = [], desktopLogin = true) =>
@@ -30,6 +30,8 @@ const LIST = [
     'https://x.com/i/flow/login', ['auth_token'], ['x.com', 'twitter.com']),
   def('FACEBOOK', 'Facebook', ['facebook.com', 'fb.watch', 'fb.com'], 'ytdlp',
     'https://www.facebook.com/login/', ['c_user'], ['facebook.com']),
+  /** Telegram：登录自己的账号后用 MTProto 下载（不走网页登录 / cookies）；没登录时公开频道交给 yt-dlp */
+  def('TELEGRAM', 'Telegram', ['t.me', 'telegram.me', 'telegram.dog'], 'telegram', null, [], [], false),
   def('VIMEO', 'Vimeo', ['vimeo.com'], 'ytdlp', 'https://vimeo.com/log_in', ['vimeo'], ['vimeo.com']),
   /** 其他网站：原样交给 yt-dlp（支持约 1800 个网站） */
   def('OTHER', '其他网站', [], 'ytdlp'),

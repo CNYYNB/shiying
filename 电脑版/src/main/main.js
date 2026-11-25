@@ -1,11 +1,11 @@
 'use strict'
 /**
  * 拾影电脑版主进程：窗口、IPC、解析 / 下载队列（一次一个，同安卓 DownloadService）、首次运行下载解析引擎。
- * 数据目录：%APPDATA%\拾影（bin\ 解析引擎，history.json，settings.json，thumbs\，cookies\，diag\）。
+ * 数据目录：Windows %APPDATA%\拾影，macOS ~/Library/Application Support/拾影（bin/ 解析引擎，history.json，settings.json，thumbs\，cookies\，diag\）。
  */
 const fs = require('fs')
 const path = require('path')
-const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, nativeImage, session, Notification, Menu } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, nativeImage, session, Notification, Menu, safeStorage } = require('electron')
 
 const Net = require('../core/net')
 const Links = require('../core/links')
@@ -20,17 +20,22 @@ const D = require('../core/downloader')
 const { refererFor } = require('../core/thumbs')
 const { makePost, UserError, PostUnavailable, NeedFallback, Cancelled } = require('../core/post')
 const { Cookies } = require('./cookies')
+const { TelegramAccount } = require('../core/telegram-account')
+const { TelegramService } = require('../core/telegram')
 const WebCapture = require('./webcapture')
+const SP = require('../core/sysplat')
 
 const VERSION = app.getVersion()
 const isDev = !app.isPackaged
 if (process.env.SHIYING_USER_DATA) app.setPath('userData', process.env.SHIYING_USER_DATA)
 
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0) }
-app.setAppUserModelId('com.louis.shiying.pc')
+const isMac = process.platform === 'darwin'
+if (process.platform === 'win32') app.setAppUserModelId('com.louis.shiying.pc')
+let quitting = false // macOS：关窗口只隐藏（下载继续），⌘Q / 菜单退出才真正退出
 
 let win = null
-let dataDir, settings, history, tools, engine, cookies
+let dataDir, settings, history, tools, engine, cookies, tgAccount, tgService
 const ICON = path.join(__dirname, '..', 'renderer', 'icon.png')
 
 function send(ch, payload) { if (win && !win.isDestroyed()) win.webContents.send(ch, payload) }
@@ -59,7 +64,7 @@ function init() {
   dataDir = app.getPath('userData')
   fs.mkdirSync(dataDir, { recursive: true })
   settings = new Settings(path.join(dataDir, 'settings.json'), {
-    quality: Quality.DEFAULT, saveDir: path.join(app.getPath('downloads'), '拾影'), autoClipboard: true, engineUpdateAt: 0,
+    quality: Quality.DEFAULT, saveDir: SP.defaultSaveDir(app.getPath('downloads')), autoClipboard: true, engineUpdateAt: 0,
   })
   history = new History(path.join(dataDir, 'history.json'), { onDrop: e => { try { fs.rmSync(thumbFile(e.key), { force: true }) } catch {} } })
   history.fixStale()
@@ -72,14 +77,55 @@ function init() {
   cookies = new Cookies(dataDir)
   Net.setProxyResolver(url => systemProxy(url))
   fs.rmSync(path.join(dataDir, 'tmp'), { recursive: true, force: true })
+  initTelegram()
 }
+
+// ------------------------------------------------------------------ Telegram（账号登录，GramJS）
+
+/** GramJS 第一次用到时才加载（启动不变慢） */
+let gram = null
+function loadGram() {
+  if (!gram) {
+    const t = require('telegram')
+    gram = { TelegramClient: t.TelegramClient, StringSession: t.sessions.StringSession, Api: t.Api, Logger: t.Logger, bigInt: require('big-integer') }
+  }
+  return gram
+}
+const lazy = f => Object.assign(f, { __lazy: true })
+
+function initTelegram() {
+  tgAccount = new TelegramAccount({
+    dir: path.join(dataDir, 'telegram'),
+    // safeStorage：Windows = DPAPI（只有当前 Windows 用户能解密）；macOS = 钥匙串里的「拾影 Safe Storage」密钥
+    secure: { available: () => safeStorage.isEncryptionAvailable(), encrypt: s => safeStorage.encryptString(s), decrypt: b => safeStorage.decryptString(b) },
+    lib: loadGram,
+    systemProxy: () => session.defaultSession.resolveProxy('https://web.telegram.org/'),
+    appVersion: VERSION,
+    systemVersion: isMac ? 'macOS' : process.platform === 'win32' ? 'Windows' : 'Linux',
+  })
+  tgService = new TelegramService({
+    getClient: () => tgAccount.getClient(),
+    Api: lazy(() => loadGram().Api),
+    bigInt: lazy(() => loadGram().bigInt),
+    log: s => tgAccount.log(s),
+  })
+}
+
+const telegramRoute = {
+  loggedIn: () => tgAccount.loggedIn(),
+  resolve: (link, log) => tgService.resolve(link, { log }),
+}
+
+const TG_LOGIN_HINT = '\n\n登录 Telegram 后拾影可以直接下载（右上角「登录」→「Telegram 账号登录」）'
 
 function createWindow() {
   win = new BrowserWindow({
     width: 1040, height: 780, minWidth: 780, minHeight: 600, title: '拾影', icon: ICON, backgroundColor: '#ffffff', show: false,
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true, spellcheck: false },
   })
-  Menu.setApplicationMenu(null)
+  const tpl = SP.menuTemplate(process.platform, { appName: '拾影', isDev, onHomepage: () => shell.openExternal('https://shiying-louis.pages.dev/') })
+  Menu.setApplicationMenu(tpl ? Menu.buildFromTemplate(tpl) : null)
+  if (isMac) win.on('close', e => { if (!quitting) { e.preventDefault(); if (win.isFullScreen()) win.setFullScreen(false); win.hide() } })
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'))
   win.once('ready-to-show', () => win.show())
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) shell.openExternal(url); return { action: 'deny' } })
@@ -112,9 +158,17 @@ app.on('login', (event, _wc, _details, authInfo, cb) => {
   try { const u = new URL(env); if (u.username) { event.preventDefault(); cb(decodeURIComponent(u.username), decodeURIComponent(u.password)) } } catch {}
 })
 
-app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus() } })
-app.on('window-all-closed', () => app.quit())
-app.whenReady().then(() => { init(); createWindow() })
+app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus() } })
+app.on('window-all-closed', () => { if (!isMac) app.quit() })
+app.on('activate', () => { if (win && !win.isDestroyed()) { win.show(); win.focus() } else if (app.isReady()) createWindow() }) // macOS：点 Dock 图标
+app.on('before-quit', () => { quitting = true; try { tgAccount?.destroy() } catch {} })
+app.whenReady().then(() => {
+  if (isMac) {
+    app.setAboutPanelOptions({ applicationName: '拾影', applicationVersion: VERSION, version: '', copyright: 'Copyright © 2026 Louis · GPL-3.0', website: 'https://shiying-louis.pages.dev/' })
+    if (isDev && app.dock) app.dock.setIcon(ICON)
+  }
+  init(); createWindow()
+})
 
 // ------------------------------------------------------------------ engine setup
 
@@ -176,7 +230,7 @@ async function parse(text) {
     try {
       // 开发用：SHIYING_FORCE_WEBCAPTURE=1 时抖音直接走网页模式（测试兜底路径）
       if (process.env.SHIYING_FORCE_WEBCAPTURE && platform === P.Platform.DOUYIN) { const t = await Douyin.resolve(text, log); throw new NeedFallback(t.id, t.likelyImages, 'forced', null) }
-      const r = await Extractor.route(text, log)
+      const r = await Extractor.route(text, log, { telegram: telegramRoute })
       if (r.type === 'native') post = r.post
       else {
         if (!tools.ready()) {
@@ -185,7 +239,13 @@ async function parse(text) {
           if (!tools.ready()) throw new UserError('解析引擎没有装好：' + (s.message || '请检查网络后点「菜单 → 更新解析引擎」'))
         }
         const ck = await cookies.export(r.platform)
-        post = await engine.info(r.url, r.platform, settings.get('quality'), ck, { log, jobId: 'parse', signal: ctrl.signal })
+        try {
+          post = await engine.info(r.url, r.platform, settings.get('quality'), ck, { log, jobId: 'parse', signal: ctrl.signal })
+        } catch (e) {
+          // 没登录 Telegram 时公开频道走 yt-dlp；失败了提示登录
+          if (r.telegramFallback && e instanceof UserError) throw new UserError(e.message.replace(/，?(请点右上角「登录」[^。\n]*|该平台暂不支持在拾影里登录)。?/g, '') + TG_LOGIN_HINT)
+          throw e
+        }
       }
     } catch (e) {
       if (!(e instanceof NeedFallback)) throw e
@@ -204,8 +264,9 @@ function decorate(p) {
   const q = settings.get('quality')
   let qualities = []
   if (p.engine === 'ytdlp') qualities = (p.ytdlpHeights || []).map(([h, size]) => ({ h, size }))
+  else if (p.engine === 'telegram') qualities = []
   else if (!p.isImages) qualities = [...new Set(Object.values(p.heights || {}))].filter(h => h > 0).sort((a, b) => b - a).map(h => ({ h, size: 0 }))
-  const shown = p.engine === 'ytdlp' ? (Quality.pick(qualities.map(x => x.h), q) || p.height) : Quality.shownHeight(p, q)
+  const shown = p.engine === 'telegram' ? p.height : p.engine === 'ytdlp' ? (Quality.pick(qualities.map(x => x.h), q) || p.height) : Quality.shownHeight(p, q)
   return { ...p, qualities, shownHeight: shown, durationText: Douyin.formatDuration(p.durationMs), platformLabel: (P.Platform[p.platform] || P.Platform.OTHER).label }
 }
 
@@ -214,6 +275,9 @@ function decorate(p) {
 const thumbFile = key => path.join(dataDir, 'thumbs', String(key).replace(/[^A-Za-z0-9._-]/g, '_') + '.jpg')
 
 async function fetchImage(url, platform, postReferer) {
+  // Telegram 的封面在解析时已经取下来了（data: URL）
+  const dm = /^data:(image\/[a-z+.-]+);base64,(.+)$/i.exec(String(url || ''))
+  if (dm) return { buf: Buffer.from(dm[2], 'base64'), type: dm[1] }
   const u = String(url || '').replace(/^http:\/\//, 'https://')
   if (!u.startsWith('https://')) return null
   const ref = refererFor(u, platform, postReferer)
@@ -226,6 +290,7 @@ async function fetchImage(url, platform, postReferer) {
 }
 
 async function coverData(url, platform, referer) {
+  if (/^data:image\//.test(String(url || ''))) return url
   try {
     const img = await fetchImage(url, platform, referer)
     if (!img) return null
@@ -294,6 +359,8 @@ async function runJob({ key, post }, signal) {
         onProgress: x => progress({ pct: x.pct, text: x.merging ? '正在合并音视频…' : `正在下载${post.entries > 1 ? `（共 ${post.entries} 个视频）` : ''}${x.speed ? ' · ' + x.speed : ''}${x.eta ? ' · 剩余 ' + x.eta : ''}`, done: x.done, total: x.total }),
       })
       files = D.moveYtdlpFiles(raw, post, saveDir)
+    } else if (post.engine === 'telegram') {
+      files = await tgService.download(post, saveDir, { signal, onProgress: x => progress(x) })
     } else {
       files = await D.downloadNative(post, saveDir, q, { signal, onProgress: x => progress(x) })
     }
@@ -332,6 +399,7 @@ h('init', async () => {
     version: VERSION, settings: settings.all(), toolsStatus: tools.status(),
     qualities: Quality.keys.map(k => ({ key: k, label: Quality.menuLabel(k) })),
     current: current ? current.key : null,
+    os: { platform: process.platform, label: SP.osLabel(), pasteKey: SP.pasteKey(), dataDir: SP.dataDirLabel(), telegramDir: SP.dataSubLabel('telegram') },
   }
 })
 h('clipboard', async () => {
@@ -368,9 +436,10 @@ h('engine-info', async () => ({
 h('open-data-dir', () => shell.openPath(dataDir))
 h('diag-copy', async () => {
   const d = engine.lastDiagRedacted()
-  const head = `拾影电脑版 ${VERSION} / Windows 版本 ${require('os').release()} / yt-dlp ${await tools.version('ytdlp') || '未安装'} / ffmpeg ${await tools.version('ffmpeg') || '未安装'} / Deno ${await tools.version('deno') || '未安装'}\n`
-  await clipboard.writeText(head + (d || '（还没有解析引擎的日志：用 yt-dlp 解析一次链接后再复制）'))
-  return !!d
+  const head = `拾影电脑版 ${VERSION} / ${SP.osLabel()} ${require('os').release()} / yt-dlp ${await tools.version('ytdlp') || '未安装'} / ffmpeg ${await tools.version('ffmpeg') || '未安装'} / Deno ${await tools.version('deno') || '未安装'}\n`
+  const tg = tgAccount.lines.length ? '\n\n----- Telegram（已隐藏 session、api_hash、手机号、验证码）-----\n' + tgAccount.diagText() : ''
+  await clipboard.writeText(head + (d || '（还没有解析引擎的日志：用 yt-dlp 解析一次链接后再复制）') + tg)
+  return !!d || !!tg
 })
 h('login-status', () => cookies.status())
 h('login-open', async name => { const p = P.byName(name); if (!p) return false; const ok = await cookies.openLogin(p, win); return ok })
@@ -382,6 +451,24 @@ h('login-import', async name => {
   if (r.canceled || !r.filePaths[0]) return null
   return cookies.importNetscape(p, fs.readFileSync(r.filePaths[0], 'utf8')) || 'ok'
 })
+// Telegram 登录（界面：登录 → Telegram 账号登录）
+const tgCall = fn => async (...a) => {
+  try { return { ok: true, ...(await fn(...a)), status: tgAccount.status() } } catch (e) {
+    return { ok: false, error: e instanceof UserError ? e.message : require('../core/telegram-support').errorMessage(e, 'login'), kind: e.tgKind || null, status: tgAccount.status() }
+  }
+}
+h('tg-status', () => tgAccount.status())
+h('tg-send-code', tgCall(a => tgAccount.sendCode({
+  apiId: (a && a.apiId) || tgAccount.cfg.apiId, apiHash: (a && a.apiHash) || tgAccount.cfg.apiHash, phone: a && a.phone, proxy: a && a.proxy,
+})))
+h('tg-resend', tgCall(() => tgAccount.resendCode()))
+h('tg-sign-in', tgCall(code => tgAccount.signIn(code)))
+h('tg-password', tgCall(pw => tgAccount.password(pw)))
+h('tg-cancel-login', tgCall(() => tgAccount.cancelLogin().then(() => ({}))))
+h('tg-logout', tgCall(forgetApi => tgAccount.logout({ forgetApi: !!forgetApi })))
+h('tg-set-proxy', tgCall(text => tgAccount.setProxy(text).then(() => ({}))))
+h('tg-test', tgCall(text => (text !== undefined ? tgAccount.setProxy(text) : Promise.resolve()).then(() => tgAccount.testConnection())))
+
 h('notice', () => {
   for (const f of [path.join(process.resourcesPath || '', 'NOTICE.md'), path.join(__dirname, '..', '..', 'NOTICE.md')]) { try { return fs.readFileSync(f, 'utf8') } catch {} }
   return ''

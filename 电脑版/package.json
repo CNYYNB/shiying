@@ -1,8 +1,8 @@
 {
   "name": "shiying-pc",
   "productName": "拾影",
-  "version": "1.0.0",
-  "description": "拾影电脑版：视频 / 图集下载器",
+  "version": "1.1.1",
+  "description": "拾影电脑版（Windows / macOS）：视频 / 图集下载器",
   "main": "src/main/main.js",
   "author": "Louis",
   "license": "GPL-3.0-only",
@@ -15,7 +15,11 @@
     "dist": "node build/build-win.js nsis zip",
     "dist:setup": "node build/build-win.js nsis",
     "dist:zip": "node build/build-win.js zip",
-    "dist:dir": "node build/build-win.js dir"
+    "dist:dir": "node build/build-win.js dir",
+    "dist:mac": "node build/build-mac.js arm64 x64",
+    "dist:mac-arm64": "node build/build-mac.js arm64",
+    "dist:mac-x64": "node build/build-mac.js x64",
+    "verify:mac": "node tools/mac-verify.js"
   },
   "devDependencies": {
     "electron": "^45.5.0",
@@ -23,6 +27,8 @@
     "resedit": "^3.1.1"
   },
   "dependencies": {
+    "big-integer": "^1.6.52",
+    "telegram": "^2.26.22",
     "undici": "^7.30.2",
     "yauzl": "^3.4.0"
   },
