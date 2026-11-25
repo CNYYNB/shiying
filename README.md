@@ -13,6 +13,8 @@
 [![License](https://img.shields.io/github/license/CNYYNB/shiying)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/CNYYNB/shiying?style=social)](https://github.com/CNYYNB/shiying/stargazers)
 
+<img src="docs/screenshots/preview.jpg" alt="拾影手机版：解析抖音、哔哩哔哩、小红书、YouTube、X 链接" width="100%">
+
 </div>
 
 ## 下载
