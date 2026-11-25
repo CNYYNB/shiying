@@ -6,7 +6,7 @@
 
 **粘贴链接就能下载视频 · Android + Windows**
 
-抖音、快手、小红书、TikTok、X、B 站、YouTube……把分享链接贴进来，自动识别平台，一键保存。<br>
+抖音、快手、小红书、TikTok、X、B 站、YouTube、微博、Instagram……把分享链接贴进来，自动识别平台，一键保存。<br>
 免费 · 开源 · 无广告 · 不用注册
 
 [![Release](https://img.shields.io/github/v/release/CNYYNB/shiying?label=%E4%B8%8B%E8%BD%BD)](https://github.com/CNYYNB/shiying/releases/latest)
@@ -31,14 +31,14 @@
 |---|---|---|---|
 | 抖音 | 原生 | ✅ 能下 | 无水印 |
 | 快手 | 原生 | ✅ 能下 | 视频 + 图集 |
-| 小红书 | 原生 | 未测 | 海外 IP 会 404 |
+| 小红书 | 原生 | ✅ 能下 | |
 | TikTok | yt-dlp | ✅ 能下 | |
 | X / Twitter | yt-dlp | ✅ 能下 | 纯图帖不下 |
-| 哔哩哔哩 | yt-dlp | 未测 | 未登录多为 720p |
-| YouTube | yt-dlp + Deno | 未测 | 含 Shorts |
-| 微博 | yt-dlp | 未测 | |
+| 哔哩哔哩 | yt-dlp | ✅ 能下 | |
+| YouTube | yt-dlp + Deno | ✅ 能下 | 含 Shorts |
+| 微博 | yt-dlp | ✅ 能下 | |
 | 西瓜 / 头条 | yt-dlp | 未测 | |
-| Instagram | yt-dlp | 未测 | 易限流 |
+| Instagram | yt-dlp | ✅ 能下 | 易限流 |
 | Facebook | yt-dlp | 未测 | |
 | Vimeo | yt-dlp | 未测 | 常需登录 |
 | 其他网站 | yt-dlp | — | yt-dlp 支持的都行 |
