@@ -357,11 +357,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun downloadLabel(p: Post): String {
-        val clean = p.platform in setOf(Platform.DOUYIN, Platform.KUAISHOU, Platform.XIAOHONGSHU, Platform.TIKTOK)
         return when {
             p.engine == "telegram" -> p.tg?.items?.let { if (it.size > 1) "下载全部（${it.size} 个文件）" else if (it.firstOrNull()?.isVideo == true) "下载视频" else "下载图片" } ?: "下载"
             !p.isImages && p.entries > 1 -> "下载全部视频（${p.entries} 个）"
-            !p.isImages -> if (clean) "下载视频（无水印）" else "下载视频"
+            !p.isImages -> "下载视频"
             p.liveCount > 0 -> "下载全部图片和实况（${p.images.size} 张）"
             else -> "下载全部图片（${p.images.size} 张）"
         }

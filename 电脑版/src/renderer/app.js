@@ -136,7 +136,7 @@ function renderPreview() {
   const p = S.post
   if (!p) { show('preview', false); return }
   show('preview', true)
-  $('pvPlatform').textContent = p.platformLabel + (p.source ? ' · ' + (p.engine === 'ytdlp' ? '解析引擎' : p.engine === 'telegram' ? '账号登录下载' : '原生解析（无水印）') : '')
+  $('pvPlatform').textContent = p.platformLabel + (p.source ? ' · ' + (p.engine === 'ytdlp' ? '解析引擎' : p.engine === 'telegram' ? '账号登录下载' : '原生解析') : '')
   $('pvTitle').textContent = p.title
   $('pvAuthor').textContent = p.author ? '@' + p.author : ''
   $('pvBadge').textContent = p.engine === 'telegram' ? (p.entries > 1 ? '相册' : '') : p.isImages ? '图集' : (p.entries > 1 ? `${p.entries} 个视频` : '')
@@ -560,7 +560,7 @@ async function openAbout() {
     <div class="kv"><span>yt-dlp</span><span>${esc(info.ytdlp || '未安装')}</span><span>ffmpeg</span><span>${esc(info.ffmpeg || '未安装')}</span>
       <span>Deno</span><span>${esc(info.deno || '未安装（只影响 YouTube）')}</span><span>位置</span><span style="word-break:break-all">${esc(info.binDir)}</span></div>
     <h3>支持平台</h3>
-    <p><b>原生解析：</b>抖音（无水印）、快手、小红书（视频 + 图集）<br><b>Telegram：</b>登录自己的账号后下载公开频道、私密频道、群组、评论里的视频 / 图片 / 相册（不登录时公开频道用 yt-dlp）；禁止保存内容的频道 / 聊天不下载<br><b>yt-dlp 解析：</b>哔哩哔哩、微博、西瓜视频 / 今日头条、YouTube（含 Shorts）、TikTok、Instagram、X / Twitter、Facebook、Vimeo 及 yt-dlp 支持的其他网站<br><b>不支持：</b>视频号、直播、私密 / 仅好友 / 已删除内容、会员专享内容</p>
+    <p><b>原生解析：</b>抖音、快手、小红书（视频 + 图集）<br><b>Telegram：</b>登录自己的账号后下载公开频道、私密频道、群组、评论里的视频 / 图片 / 相册（不登录时公开频道用 yt-dlp）；禁止保存内容的频道 / 聊天不下载<br><b>yt-dlp 解析：</b>哔哩哔哩、微博、西瓜视频 / 今日头条、YouTube（含 Shorts）、TikTok、Instagram、X / Twitter、Facebook、Vimeo 及 yt-dlp 支持的其他网站<br><b>不支持：</b>视频号、直播、私密 / 仅好友 / 已删除内容、会员专享内容</p>
     <h3>使用须知</h3>
     <p>${esc(NOTICE_TEXT)}</p>
     <h3>许可证</h3>

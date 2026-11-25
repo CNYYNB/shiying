@@ -7,8 +7,8 @@ import java.io.IOException
 /**
  * 小红书: xhslink short link → note page (www.xiaohongshu.com/explore/{id}?xsec_token=…, the token is required)
  * → window.__INITIAL_STATE__ (PC: note.noteDetailMap[id].note, mobile: noteData.data.noteData).
- * - Video: sns-video-bd.xhscdn.com/{consumer.originVideoKey} (original upload, no watermark), then stream.h264/h265 masterUrls.
- * - Images: the image token from urlDefault → sns-img-bd.xhscdn.com/{token} / ci.xiaohongshu.com/{token} (original, no watermark),
+ * - Video: sns-video-bd.xhscdn.com/{consumer.originVideoKey} (original upload), then stream.h264/h265 masterUrls.
+ * - Images: the image token from urlDefault → sns-img-bd.xhscdn.com/{token} / ci.xiaohongshu.com/{token} (original),
  *   the page's urlDefault as last resort. Live photos: imageList[].stream.h264[].masterUrl.
  * Pure JVM.
  */

@@ -1,7 +1,7 @@
 {
   "name": "shiying-pc",
   "productName": "拾影",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "拾影电脑版（Windows / macOS）：视频 / 图集下载器",
   "main": "src/main/main.js",
   "author": "Louis",

@@ -8,7 +8,7 @@ import java.io.IOException
 /**
  * 快手: share link → mobile share page (v.m.chenzhongtech.com/fw/photo/{id}, iPhone UA) → window.INIT_STATE.
  * The state's top-level keys are obfuscated, but the values are plain JSON: the post is the object that holds
- * `photo.mainMvUrls` (clean mp4, no watermark) or an atlas (图集) list. Errors come as {"result":N,"error_msg":"…"}.
+ * `photo.mainMvUrls` (original mp4) or an atlas (图集) list. Errors come as {"result":N,"error_msg":"…"}.
  * Pure JVM (OkHttp + org.json).
  */
 object Kuaishou {

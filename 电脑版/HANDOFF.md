@@ -18,7 +18,7 @@
 | `src/core/post.js` | 作品对象 `makePost` + `UserError` / `PostUnavailable` / `NeedFallback` / `Cancelled` | Parser.kt 的 Post |
 | `src/core/quality.js` | 画质档位、挑选、`-S` 参数、yt-dlp 各档大小 | Quality.kt |
 | `src/core/net.js` | undici 请求、cookie jar、按网址解析代理、短链接展开 `follow` | Net.kt + Resolve |
-| `src/core/douyin.js` | 抖音：分享页 `_ROUTER_DATA`、无水印地址、网页 API JSON | Parser.kt + Extractor.resolve/fromSharePage |
+| `src/core/douyin.js` | 抖音：分享页 `_ROUTER_DATA`、原始文件地址、网页 API JSON | Parser.kt + Extractor.resolve/fromSharePage |
 | `src/core/kuaishou.js` / `xhs.js` | 快手 / 小红书原生解析 | Kuaishou.kt / Xhs.kt |
 | `src/core/extractor.js` | 路由：原生 or yt-dlp | Extractor.route |
 | `src/core/ytdlp-support.js` | yt-dlp 参数、info JSON → 作品、错误 → 中文、YouTube 判断、日志脱敏、cookies.txt 工具 | YtdlpSupport.kt + CookieText |

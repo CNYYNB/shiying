@@ -12,7 +12,7 @@ data class Post(
     val author: String,
     val cover: String?,
     val durationMs: Long,
-    /** No-watermark candidates, best first. Tried in order until one downloads. */
+    /** Original-file candidates, best first. Tried in order until one downloads. */
     val videoUrls: List<String>,
     val images: List<ImageItem>,
     /** Which extraction method produced this post ("分享页" / "网页" / "解析引擎" …). */
@@ -94,7 +94,7 @@ object Parser {
 
     private fun firstUrl(o: JSONObject?): String? = strings(o?.optJSONArray("url_list")).firstOrNull()
 
-    /** Rewrite an aweme play / playwm API url to the no-watermark play url at a given ratio. */
+    /** Rewrite an aweme play / playwm API url to the original-file play url at a given ratio. */
     fun playUrl(u: String, ratio: String?): String {
         var s = u.replace("/playwm/", "/play/").replace("playwm?", "play?")
         if (ratio != null) {
@@ -106,7 +106,7 @@ object Parser {
 
     private fun isPlayApi(u: String) = u.contains("/aweme/v1/play")
 
-    /** All no-watermark video candidates for a `video` object, best quality first, de-duplicated. */
+    /** All original-file video candidates for a `video` object, best quality first, de-duplicated. */
     fun videoCandidates(video: JSONObject?): List<String> = videoCandidatesWithHeights(video).first
 
     /** Candidates + known height of each (bit_rate entries, ratio=… play urls). */
@@ -157,7 +157,7 @@ object Parser {
         val images = ArrayList<ImageItem>()
         if (imgs != null) for (i in 0 until imgs.length()) {
             val im = imgs.optJSONObject(i) ?: continue
-            // url_list = clean image; download_url_list = with watermark (never used). Prefer jpeg over webp.
+            // url_list = original image; download_url_list = the platform's download copy (never used). Prefer jpeg over webp.
             val urls = strings(im.optJSONArray("url_list")).sortedBy { if (it.contains(".webp")) 1 else 0 }
             if (urls.isEmpty()) continue
             images += ImageItem(urls, videoCandidates(im.optJSONObject("video")))

@@ -143,7 +143,7 @@ function errorsOnly(stderr) {
   return e.trim() ? e : problemLines(stderr)
 }
 
-/** YouTube 拒绝了请求，换客户端 / 更新引擎 / 登录可能绕过 */
+/** YouTube 拒绝了请求，换客户端 / 更新引擎 / 登录后可能可以 */
 function ytBlocked(stderr) {
   const all = problemLines(stderr).toLowerCase()
   const s = errorsOnly(stderr).toLowerCase()

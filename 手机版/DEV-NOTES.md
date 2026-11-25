@@ -28,9 +28,9 @@ Sandbox is aarch64: arm64 aapt2 via `android.aapt2FromMavenOverride` (set by mkp
 ## Platforms and engines
 | Platform | Engine | Notes |
 |---|---|---|
-| 抖音 | native (1.0 code, unchanged) | share page `_ROUTER_DATA`, `playwm→play` no watermark, WebView fallback |
+| 抖音 | native (1.0 code, unchanged) | share page `_ROUTER_DATA`, `playwm→play` (original file), WebView fallback |
 | 快手 | native `Kuaishou.kt` | v.kuaishou.com → `v.m.chenzhongtech.com/fw/photo/{3x…}` (iPhone UA) → `window.INIT_STATE` (obfuscated keys, plain values). `photo.mainMvUrls` = clean mp4; manifest mp4 reps preferred if present (HLS skipped). 图集 = `ext_params.atlas{cdn,list}`. `{"result":N,"error_msg":…}` → error text shown as-is (e.g. 作品在审核中). |
-| 小红书 | native `Xhs.kt`, fallback yt-dlp | xhslink → `/explore|discovery/item/{id}?xsec_token=…` (token required) → `__INITIAL_STATE__` (PC `note.noteDetailMap[id].note`, mobile `noteData.data.noteData`). Video: `sns-video-bd.xhscdn.com/{originVideoKey}` then h264/h265 masterUrls. Images: token from urlDefault → `sns-img-bd.xhscdn.com/{token}` / `ci.xiaohongshu.com/{token}` (no watermark). Live photos from `imageList[].stream`. Redirect to `/404/sec_…` or rednote.com → clear error (overseas IP / need login / expired). |
+| 小红书 | native `Xhs.kt`, fallback yt-dlp | xhslink → `/explore|discovery/item/{id}?xsec_token=…` (token required) → `__INITIAL_STATE__` (PC `note.noteDetailMap[id].note`, mobile `noteData.data.noteData`). Video: `sns-video-bd.xhscdn.com/{originVideoKey}` then h264/h265 masterUrls. Images: token from urlDefault → `sns-img-bd.xhscdn.com/{token}` / `ci.xiaohongshu.com/{token}` (original). Live photos from `imageList[].stream`. Redirect to `/404/sec_…` or rednote.com → clear error (overseas IP / need login / expired). |
 | 哔哩哔哩, 微博, 西瓜/头条, YouTube (+Shorts), TikTok, Instagram, X, Facebook, Vimeo, any other site | yt-dlp | `Engine.kt` (process, cookies, update) + `YtdlpSupport.kt` (pure: options, JSON→Post, errors) |
 | 视频号 | — | no public share links → not supported (said in 使用说明) |
 

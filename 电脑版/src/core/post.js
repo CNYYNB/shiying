@@ -15,7 +15,7 @@ class Cancelled extends Error { constructor() { super('已取消'); this.name = 
 
 /**
  * 创建作品对象。字段同安卓版 Post：
- * id, isImages, desc, author, cover, durationMs, videoUrls(无水印候选，好的在前), images[{urls, liveVideoUrls}],
+ * id, isImages, desc, author, cover, durationMs, videoUrls(原始文件候选，好的在前), images[{urls, liveVideoUrls}],
  * source, platform(名字), pageUrl, engine("native"|"ytdlp"), infoJson, headers, entries, height, heights{url:h},
  * qualityOverride, ytdlpArgs。另外算好 title / liveCount / link。
  */

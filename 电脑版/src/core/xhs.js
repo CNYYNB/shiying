@@ -2,8 +2,8 @@
 /**
  * 小红书原生解析（移植自 Xhs.kt）：xhslink 短链 → 笔记页（www.xiaohongshu.com/explore/{id}?xsec_token=…，token 必须有）
  * → window.__INITIAL_STATE__（电脑版 note.noteDetailMap[id].note，手机版 noteData.data.noteData）。
- * - 视频：sns-video-bd.xhscdn.com/{consumer.originVideoKey}（原始上传、无水印），然后 stream.h264/h265 masterUrl。
- * - 图片：从 urlDefault 取图片 token → sns-img-bd.xhscdn.com/{token} / ci.xiaohongshu.com/{token}（原图、无水印），
+ * - 视频：sns-video-bd.xhscdn.com/{consumer.originVideoKey}（原始上传），然后 stream.h264/h265 masterUrl。
+ * - 图片：从 urlDefault 取图片 token → sns-img-bd.xhscdn.com/{token} / ci.xiaohongshu.com/{token}（原图），
  *   页面的 urlDefault 兜底。实况图：imageList[].stream.h264[].masterUrl。
  */
 const Links = require('./links')

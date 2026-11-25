@@ -18,7 +18,7 @@ for abi in ("arm64-v8a", "armeabi-v7a"):
     abis[abi] = {"apk": (base.rstrip('/') + '/' + name) if base else name, "sha256": sha(p), "size": os.path.getsize(p)}
 notes = open(notes_file, encoding="utf-8").read().strip() if os.path.exists(notes_file) else ("拾影 2.0：\n"
  "· 新增支持快手、小红书、哔哩哔哩、微博、西瓜视频/今日头条，以及 YouTube（含 Shorts）、TikTok、Instagram、X/Twitter、Facebook、Vimeo，粘贴链接自动识别平台\n"
- "· 抖音 / 快手 / 小红书 / TikTok 无水印；B站等平台自动合并音视频，默认最高 1080p（可改为最高画质）\n"
+ "· 抖音 / 快手 / 小红书 / TikTok 原画质；B站等平台自动合并音视频，默认最高 1080p（可改为最高画质）\n"
  "· 新增「取消下载」（通知栏也可取消），取消后自动清理未完成的文件\n"
  "· 新增「更新解析引擎」，平台改版后一键修复\n"
  "· 可选登录各平台账号（B站高清、Instagram、小红书等）\n"

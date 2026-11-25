@@ -27,16 +27,16 @@
 
 到右边的 **Releases** 下载最新版：
 
-- 手机：`Shiying-Android-2.4-arm64-v8a.apk`（绝大多数手机装这个，Android 7 及以上）
-- 老的 32 位手机：`Shiying-Android-2.4-armeabi-v7a.apk`
-- Windows：`Shiying-Windows-Setup-1.2.0.exe`（Windows 10/11 64 位）
-- Mac（M 芯片）：`Shiying-macOS-1.2.0-arm64.zip`；Mac（Intel）：`Shiying-macOS-1.2.0-x64.zip`（macOS 12 及以上，安装步骤见 [电脑版/README.md](电脑版/README.md)）
+- 手机：`Shiying-Android-2.4.1-arm64-v8a.apk`（绝大多数手机装这个，Android 7 及以上）
+- 老的 32 位手机：`Shiying-Android-2.4.1-armeabi-v7a.apk`
+- Windows：`Shiying-Windows-Setup-1.2.1.exe`（Windows 10/11 64 位）
+- Mac（M 芯片）：`Shiying-macOS-1.2.1-arm64.zip`；Mac（Intel）：`Shiying-macOS-1.2.1-x64.zip`（macOS 12 及以上，安装步骤见 [电脑版/README.md](电脑版/README.md)）
 
 ## 支持哪些平台
 
 | 平台 | 解析方式 | 实测 | 备注 |
 |---|---|---|---|
-| 抖音 | 原生 | ✅ 能下 | 无水印 |
+| 抖音 | 原生 | ✅ 能下 | 原画质 |
 | 快手 | 原生 | ✅ 能下 | 视频 + 图集 |
 | 小红书 | 原生 | ✅ 能下 | |
 | TikTok | yt-dlp | ✅ 能下 | |

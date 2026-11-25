@@ -1,6 +1,6 @@
 'use strict'
 /**
- * 抖音原生解析（无水印），移植自 Parser.kt + Extractor.resolve/fromSharePage。
+ * 抖音原生解析，移植自 Parser.kt + Extractor.resolve/fromSharePage。
  * 链接 → 作品 ID → iesdouyin 分享页（iPhone UA）→ 页面里的 window._ROUTER_DATA。
  */
 const Links = require('./links')
@@ -49,7 +49,7 @@ function unavailable(reason, notice = '', detail = '') {
 function strings(a) { return Array.isArray(a) ? a.filter(s => typeof s === 'string' && s.startsWith('http')) : [] }
 const firstUrl = o => strings(o && o.url_list)[0] || null
 
-/** 把 play / playwm 接口地址改成无水印的 play 地址（可指定 ratio） */
+/** 把 play / playwm 接口地址改成原始文件的 play 地址（可指定 ratio） */
 function playUrl(u, ratio) {
   let s = u.replace('/playwm/', '/play/').replace('playwm?', 'play?')
   if (ratio != null) {
@@ -59,7 +59,7 @@ function playUrl(u, ratio) {
 }
 const isPlayApi = u => u.includes('/aweme/v1/play')
 
-/** 一个 video 对象里所有无水印候选（好的在前，去重）+ 已知的高度 */
+/** 一个 video 对象里所有原始文件候选（好的在前，去重）+ 已知的高度 */
 function videoCandidatesWithHeights(video) {
   const out = new Set(); const hs = {}
   if (!video || typeof video !== 'object') return [[], {}]
@@ -99,7 +99,7 @@ function fromItem(item, source) {
   const images = []
   if (Array.isArray(item.images)) for (const im of item.images) {
     if (!im || typeof im !== 'object') continue
-    // url_list = 无水印；download_url_list = 带水印（不用）。jpeg 优先于 webp
+    // url_list = 原图；download_url_list = 平台下载副本（不用）。jpeg 优先于 webp
     const urls = strings(im.url_list).map((u, i) => [u, i]).sort((a, b) => ((a[0].includes('.webp') ? 1 : 0) - (b[0].includes('.webp') ? 1 : 0)) || a[1] - b[1]).map(x => x[0])
     if (!urls.length) continue
     images.push({ urls, liveVideoUrls: videoCandidates(im.video) })

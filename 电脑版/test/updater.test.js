@@ -419,13 +419,12 @@ test('make-pc-manifest：读发布文件算 sha256 / 大小，地址正确编码
   assert.throws(() => makeManifest({ version: '1.2.0', dist, mirror: ['http://x/'] }), /mirror/)
 })
 
-test('仓库里的 update/pc-version.json 是 1.2.0、格式正确、地址指向 pc-1.2.0', () => {
+test('仓库里的 update/pc-version.json 与 package.json 版本一致、格式正确、地址指向 GitHub Releases', () => {
   const f = path.join(root, 'update', 'pc-version.json')
   const m = U.parseManifest(fs.readFileSync(f, 'utf8'))
   const pkg = require('../package.json')
   assert.equal(m.version, pkg.version)
-  assert.equal(pkg.version, '1.2.0')
-  for (const a of [m.win.x64, m.mac.arm64, m.mac.x64]) assert.match(a.url, /^https:\/\/github\.com\/CNYYNB\/shiying\/releases\/download\/pc-1\.2\.0\/Shiying-/)
+  for (const a of [m.win.x64, m.mac.arm64, m.mac.x64]) assert.match(a.url, /^https:\/\/github\.com\/CNYYNB\/shiying\/releases\/download\/[^/]+\/Shiying-/)
   // dist 里有构建产物时核对 sha256 / 大小
   for (const a of [m.win.x64, m.mac.arm64, m.mac.x64]) {
     const p = path.join(root, 'dist', a.name)

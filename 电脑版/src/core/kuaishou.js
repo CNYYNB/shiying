@@ -1,7 +1,7 @@
 'use strict'
 /**
  * 快手原生解析（移植自 Kuaishou.kt）：分享链接 → 手机分享页 v.m.chenzhongtech.com/fw/photo/{id}（iPhone UA）→ window.INIT_STATE。
- * 顶层键名是混淆的，但值是普通 JSON：作品就是含 photo.mainMvUrls（无水印 mp4）或图集列表的那个对象。
+ * 顶层键名是混淆的，但值是普通 JSON：作品就是含 photo.mainMvUrls（原始 mp4）或图集列表的那个对象。
  * 错误形如 {"result":N,"error_msg":"…"}。
  */
 const Links = require('./links')
