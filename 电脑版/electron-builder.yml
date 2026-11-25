@@ -1,0 +1,38 @@
+appId: com.louis.shiying.pc
+productName: 拾影
+copyright: Copyright © 2026 Louis · GPL-3.0
+directories:
+  output: dist
+  buildResources: build
+files:
+  - src/**/*
+  - package.json
+  - "!**/*.map"
+extraResources:
+  - from: LICENSE
+    to: LICENSE.txt
+  - from: NOTICE.md
+    to: NOTICE.md
+asar: true
+electronLanguages: [zh-CN, en-US]
+win:
+  target: [nsis, zip]
+  icon: build/icon.ico
+  executableName: 拾影
+  artifactName: 拾影-PC-${version}-win-${arch}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  installerLanguages: [zh_CN]
+  language: "2052"
+  unicode: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: 拾影
+  uninstallDisplayName: 拾影 ${version}
+  artifactName: 拾影-Setup-${version}.${ext}
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  license: build/license-zh.txt

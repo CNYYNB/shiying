@@ -1,0 +1,6 @@
+拾影 2.3：
+· YouTube 改用 Deno 引擎（与 YTDLnis 相同）：使用 YTDLnis 作者发布的「YTDLnis Deno Package」，已在 YTDLnis 里装过 Deno 的手机会自动使用，不用再装
+· 没装 Deno 时，第一次解析 YouTube 会提示下载安装（从 GitHub 下载约 87 MB，需要开启 VPN），也可以在 ⋮ →「安装 Deno 引擎」手动安装；下载可取消、断点续传
+· YouTube 解析失败时，自动把解析引擎更新到最新 nightly 版（与 YTDLnis 默认一致）后重试（6 小时内只更新一次）
+· 诊断日志里增加 Deno 引擎的状态和版本
+· 32 位手机没有 Deno 版本，继续使用内置 QuickJS；其他平台不受影响

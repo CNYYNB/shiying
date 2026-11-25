@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#FFFFFF</color>
+    <color name="surface">#F4F4F6</color>
+    <color name="text">#111111</color>
+    <color name="text2">#5A5A5A</color>
+    <color name="red">#D9192B</color>
+    <color name="red_pressed">#A80F1E</color>
+    <color name="red_soft">#FDE7E9</color>
+    <color name="on_red">#FFFFFF</color>
+    <color name="border">#D6D6DA</color>
+    <color name="error">#C0001A</color>
+    <color name="ok">#1B7F3A</color>
+    <color name="disabled">#BDBDBD</color>
+    <color name="ic_bg">#D9192B</color>
+</resources>

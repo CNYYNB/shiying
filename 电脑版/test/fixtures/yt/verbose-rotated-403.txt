@@ -1,0 +1,47 @@
+[debug] Command-line config: ['-v', '--no-cache-dir', '--js-runtimes', 'node', '--cookies', '/tmp/ck/auth2.txt', '--no-check-certificates', '--skip-download', '--dump-single-json', 'https://www.youtube.com/watch?v=kVk_Nwca6Wk']
+[debug] Encodings: locale UTF-8, fs utf-8, pref UTF-8, out utf-8 (No ANSI), error utf-8 (No ANSI), screen utf-8 (No ANSI)
+[debug] yt-dlp version stable@2026.11.23 from yt-dlp/yt-dlp [696c0673e] (zip)
+[debug] Python 3.12.16 (CPython aarch64 64bit) - Linux-6.12.110+-aarch64-with-glibc2.41 (OpenSSL 3.5.7 9 Jun 2026, glibc 2.41)
+[debug] exe versions: ffmpeg 7.1.5-0 (setts), ffprobe 7.1.5-0
+[debug] Optional libraries: certifi-2026.11.20, sqlite3-3.46.1, websockets-17.4, yt_dlp_ejs-0.8.0
+[debug] JS runtimes: node-22.23.5
+[debug] Proxy map: {'https': 'http://REDACTED-PROXY:8003', 'http': 'http://REDACTED-PROXY:8003'}
+[debug] Request Handlers: urllib, websockets
+[debug] Plugin directories: none
+[debug] Loaded 1744 extractors
+[debug] [youtube] Found YouTube account cookies
+[debug] [youtube] [pot] PO Token Providers: none
+[debug] [youtube] [pot] PO Token Cache Providers: memory
+[debug] [youtube] [pot] PO Token Cache Spec Providers: webpo
+[debug] [youtube] [jsc] JS Challenge Providers: bun (unavailable), deno (unavailable), node, quickjs (unavailable)
+[youtube] Extracting URL: https://www.youtube.com/watch?v=kVk_Nwca6Wk
+[youtube] kVk_Nwca6Wk: Downloading webpage
+WARNING: [youtube] kVk_Nwca6Wk: Unable to download webpage: HTTP Error 429: Too Many Requests (caused by <HTTPError 429: Too Many Requests>)
+[youtube] kVk_Nwca6Wk: Downloading initial data API JSON
+WARNING: [youtube] kVk_Nwca6Wk: Unable to download API page: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>)
+[youtube] kVk_Nwca6Wk: Downloading iframe API JS
+WARNING: [youtube] The provided YouTube account cookies are no longer valid. They have likely been rotated in the browser as a security measure. For tips on how to effectively export YouTube cookies, refer to  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies .
+[youtube] kVk_Nwca6Wk: Downloading player b485e332-tv
+WARNING: [youtube] The provided YouTube account cookies are no longer valid. They have likely been rotated in the browser as a security measure. For tips on how to effectively export YouTube cookies, refer to  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies .
+[youtube] kVk_Nwca6Wk: Downloading tv samsung player API JSON
+WARNING: [youtube] kVk_Nwca6Wk: Unable to download API page: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>)
+[youtube] kVk_Nwca6Wk: Downloading web embedded client config
+WARNING: [youtube] The provided YouTube account cookies are no longer valid. They have likely been rotated in the browser as a security measure. For tips on how to effectively export YouTube cookies, refer to  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies .
+[debug] [youtube] kVk_Nwca6Wk: Detected experiment to bind GVS PO Token to video ID for web_embedded client
+[youtube] kVk_Nwca6Wk: Downloading web embedded player API JSON
+WARNING: [youtube] kVk_Nwca6Wk: Unable to download API page: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>)
+[youtube] kVk_Nwca6Wk: Downloading web player API JSON
+WARNING: [youtube] kVk_Nwca6Wk: Unable to download API page: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>)
+ERROR: [youtube] kVk_Nwca6Wk: Failed to extract any player response; please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
+  File "/tmp/ytz/y.zip/yt_dlp/extractor/common.py", line 764, in extract
+    ie_result = self._real_extract(url)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/ytz/y.zip/yt_dlp/extractor/youtube/_video.py", line 3951, in _real_extract
+    webpage, webpage_ytcfg, initial_data, is_premium_subscriber, player_responses, player_url = self._initial_extract(
+                                                                                                ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/ytz/y.zip/yt_dlp/extractor/youtube/_video.py", line 3938, in _initial_extract
+    player_responses, player_url = self._extract_player_responses(
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/ytz/y.zip/yt_dlp/extractor/youtube/_video.py", line 3201, in _extract_player_responses
+    raise ExtractorError('Failed to extract any player response')
+

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>拾影</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="icon.png" alt=""><div><b>拾影</b><span>视频 / 图集下载</span></div></div>
+  <div class="top-actions">
+    <button id="btnLogin" class="ghost">登录</button>
+    <div class="menu-wrap">
+      <button id="btnMenu" class="ghost">菜单 ▾</button>
+      <div id="menu" class="menu hidden">
+        <div class="menu-title">下载画质</div>
+        <div id="menuQuality"></div>
+        <hr>
+        <button data-act="saveDir">保存位置…</button>
+        <button data-act="clip" id="menuClip">✓ 自动识别剪贴板里的链接</button>
+        <hr>
+        <button data-act="update">更新解析引擎</button>
+        <button data-act="diag">复制诊断日志</button>
+        <button data-act="data">打开数据文件夹</button>
+        <hr>
+        <button data-act="about">关于拾影</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="left">
+    <div id="setup" class="card setup hidden">
+      <div class="setup-head"><b id="setupTitle">正在准备解析引擎</b><span id="setupHint">首次使用需要下载 yt-dlp、ffmpeg 和 Deno（约 100 MB），只下载一次</span></div>
+      <div id="setupRows"></div>
+      <div id="setupErr" class="err hidden"></div>
+      <div class="row-btns"><button id="setupRetry" class="hidden">重试</button></div>
+    </div>
+
+    <div class="card paste">
+      <div class="card-title">粘贴分享链接 <span id="detected" class="chip hidden"></span></div>
+      <textarea id="input" rows="3" spellcheck="false" placeholder="在 App 里点「分享 → 复制链接」，再粘贴到这里（Ctrl+V）&#10;支持抖音、快手、小红书、B站、微博、西瓜 / 头条、YouTube、TikTok、Instagram、X、Facebook、Vimeo 等"></textarea>
+      <div class="row-btns">
+        <button id="btnPaste">粘贴</button>
+        <button id="btnClear" class="ghost">清空</button>
+        <span class="grow"></span>
+        <button id="btnParse" class="primary">解析</button>
+      </div>
+      <div id="status" class="status hidden"><span class="spin"></span><span id="statusText"></span><a id="btnCancelParse" href="#">取消</a></div>
+      <div id="error" class="err hidden"><div id="errorText"></div><div class="row-btns small"><button id="btnErrDiag" class="ghost">复制诊断日志</button><button id="btnErrLogin" class="ghost hidden">去登录</button></div></div>
+    </div>
+
+    <div id="preview" class="card preview hidden">
+      <div class="pv-body">
+        <div class="pv-cover"><img id="pvCover" alt=""><span id="pvBadge" class="pv-badge"></span><span id="pvDur" class="pv-dur"></span></div>
+        <div class="pv-info">
+          <div class="pv-platform" id="pvPlatform"></div>
+          <div class="pv-title" id="pvTitle"></div>
+          <div class="pv-author" id="pvAuthor"></div>
+          <div class="pv-meta" id="pvMeta"></div>
+          <label id="pvQualityRow" class="pv-quality hidden">本次画质
+            <select id="pvQuality"></select>
+          </label>
+        </div>
+      </div>
+      <div id="pvProgress" class="progress hidden"><div class="bar"><i id="pvBar"></i></div><div class="ptext"><span id="pvPText"></span><span id="pvPct"></span></div></div>
+      <div class="row-btns">
+        <button id="btnCopyLink" class="ghost">复制链接</button>
+        <button id="btnOpenPage" class="ghost">在浏览器打开</button>
+        <span class="grow"></span>
+        <button id="btnShowDone" class="hidden">打开文件夹</button>
+        <button id="btnDownload" class="primary big">下载</button>
+      </div>
+    </div>
+
+    <div class="savebar">
+      <span>保存到：</span><span id="saveDir" class="path" title=""></span>
+      <a href="#" id="btnChangeDir">更改</a><a href="#" id="btnOpenDir">打开</a>
+      <span class="grow"></span><span>画质：</span><select id="qualitySel"></select>
+    </div>
+  </section>
+
+  <section class="right card">
+    <div class="card-title">下载记录 <span class="grow"></span><a href="#" id="btnHistClear" class="small-link">清空</a></div>
+    <div id="histEmpty" class="empty">还没有下载记录。粘贴链接、解析后点「下载」。</div>
+    <ul id="history"></ul>
+  </section>
+</main>
+
+<div id="modal" class="modal hidden"><div class="modal-box"><button class="modal-x" id="modalX">×</button><div id="modalBody"></div></div></div>
+<div id="toast" class="toast hidden"></div>
+<script src="app.js"></script>
+</body>
+</html>
