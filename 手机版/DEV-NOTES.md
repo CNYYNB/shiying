@@ -1,8 +1,10 @@
-# 拾影 (com.louis.shiying) 2.3 — video / 图集 downloader for mainstream Chinese + international platforms (personal use)
+# 拾影 (com.louis.shiying) 2.4 — video / 图集 downloader for mainstream Chinese + international platforms (personal use)
 
 Native Kotlin, Views (no Compose / no Material lib), OkHttp 4.12, androidx.webkit, **youtubedl-android 0.18.1** (yt-dlp + Python 3.12 +
-QuickJS, GPL-3.0) with its **ffmpeg** module. minSdk 24, targetSdk 34. versionCode 5 / versionName 2.3.
+QuickJS, GPL-3.0) with its **ffmpeg** module. minSdk 24, targetSdk 34. versionCode 6 / versionName 2.4 (2.3 = versionCode 5). 2.2 source backup: /workspace/work/shiying-2.2-src-backup/.
 
+2.4 APKs (signed with the same key, cert SHA-256 48bca8fe…0901586): `/workspace/shiying/out-2.4/shiying-2.4-arm64-v8a.apk` (57,400,182 B) and
+`shiying-2.4-armeabi-v7a.apk` (50,747,366 B) — +148 KB vs 2.3 built from the same toolchain (Telegram code + TL schema).
 APKs (ABI splits, v2-signed with `keystore/myplayer-debug.jks`, alias myplayer — same key as 1.0 and 我的播放器,
 cert SHA-256 48bca8fe…0901586. KEEP IT: updates must use the same key):
 - `out/shiying-2.3-arm64-v8a.apk` (~55 MB) — modern phones, the one to install
@@ -12,11 +14,15 @@ cert SHA-256 48bca8fe…0901586. KEEP IT: updates must use the same key):
 - `out/shiying-1.0.apk` = previous release.
 
 ## Build
-    # JDK 17+, Android SDK 34 (platform + build-tools), Gradle 8.9
-    echo "sdk.dir=/path/to/android-sdk" > local.properties
-    gradle :app:assembleRelease          # → app/build/outputs/apk/release/app-{arm64-v8a,armeabi-v7a}-release.apk
-    gradle :app:testReleaseUnitTest      # unit tests (LiveExtractTest needs network, skipped by default)
-Release signing: put keystore.properties in the project root (not in the repo); otherwise the debug key is used.
+    bash (Hark 沙箱专用，见 HANDOFF.md)        # restores ~/android-sdk, ~/gradle-8.9, openjdk-21 (non-persistent parts)
+    cd /workspace/work/shiying-apk
+    ./mkprops.sh                                   # proxy creds → gradle.properties, sdk.dir → local.properties (creds rotate: rerun on 407)
+    export GRADLE_USER_HOME=/workspace/tools/gradle-home ANDROID_HOME=~/android-sdk
+    ~/gradle-8.9/bin/gradle --no-daemon :app:assembleRelease
+    cp app/build/outputs/apk/release/app-arm64-v8a-release.apk out/shiying-2.2-arm64-v8a.apk
+    cp app/build/outputs/apk/release/app-armeabi-v7a-release.apk out/shiying-2.2-armeabi-v7a.apk
+    APK_BASE=https://pub-6239c39917f244328c1113da22f8ac5b.r2.dev/ tools/make-update-site.sh   # changelog = tools/notes-<versionName>.txt; nothing is deployed
+Sandbox is aarch64: arm64 aapt2 via `android.aapt2FromMavenOverride` (set by mkprops.sh). Run long gradle tasks with `setsid nohup … &`.
 `jniLibs.useLegacyPackaging = true` is required (the library executes libpython.so / libffmpeg.so from nativeLibraryDir → extractNativeLibs=true).
 
 ## Platforms and engines
@@ -44,6 +50,53 @@ copy; check the release with `unzip -p … yt_dlp/version.py`). The library only
 `Engine.applyBundledEngine` deletes `noBackupFilesDir/youtubedl-android/yt-dlp` once per new bundle if the installed version (SharedPreferences
 "youtubedl-android" → dlpVersion) is older. To bump: replace res/raw/ytdlp + `Engine.BUNDLED_YTDLP`. `Engine.initAsync` (App.onCreate) unpacks Python/ffmpeg once, then silently runs
 `updateYoutubeDL(STABLE)` at most every 3 days; ⋮ → 更新解析引擎 does it on demand (downloads from GitHub → needs VPN in mainland China).
+
+## Telegram (2.4) — own Kotlin MTProto, user's own api_id
+Parity with the PC version 1.1.0 (`/workspace/shiying-pc`, commit 6dbda54: telegram-support.js / telegram.js / telegram-account.js; same link forms,
+same 中文 wording with 右键 → 长按).
+
+**Why not TDLib / GramJS / a JVM library**: TDLib needs native libs per ABI; there is no official prebuilt for Android, third-party jitpack
+builds are not reproducible, and building it needs the NDK, which only exists for x86_64 hosts (this sandbox is aarch64) — plus ~10 MB/ABI
+compressed. GramJS needs Node (net sockets, crypto); 拾影 only reaches Deno through the separate YTDLnis companion app and armeabi-v7a has
+QuickJS only, so login would depend on an optional 87 MB app. JVM libraries: kotlogram/TelegramApi are dead (layer < 100), Telegram4J pulls
+Netty + Reactor + Jackson and targets Java 11+. So 2.4 ships its own small MTProto client (`mtproto/`, ~1,100 lines, JCA + BigInteger + org.json
+only, ~100 KB of dex + 235 KB TL text compressed to ~40 KB):
+- `Tl.kt`: parses `assets/telegram/schema.tl` + `api.tl` (copied from GramJS 2.26.22, LAYER 198) at run time; every object is a generic
+  `TlObj(type, fields)` with schema field names; flags / `true` flags / Vector / bare types / gzip_packed handled generically.
+- `Crypto.kt`: AES-256-IGE (on AES/ECB), AES-CTR, RSA_PAD with Telegram's 2 server keys (fingerprints checked in tests), Pollard–Brent
+  pq factorization, PBKDF2-HMAC-SHA512 (manual; the JCA name needs API 26), SRP 2FA check (same algorithm as GramJS computeCheck).
+- `Transport.kt`: obfuscated2 + intermediate framing on every connection (0xeeeeeeee; padded intermediate 0xdddddddd for dd-MTProxies;
+  MTProxy keys = sha256(key ‖ secret)), SOCKS5 with RFC 1929 user/password, Chinese proxy errors.
+- `MtConnection.kt`: DH auth-key creation (req_pq_multi → p_q_inner_data RSA_PAD → server_DH_params → set_client_DH_params, DH prime
+  checked), MTProto 2.0 encryption (msg_key = SHA256 middle, KDF x=0/8), msg_id/seqno, salt from bad_server_salt / new_session_created,
+  time fix on bad_msg_notification 16/17, containers, acks, several requests in flight (reader thread).
+- `TgClient.kt`: one connection per DC (production IPs; test DCs for tests), invokeWithLayer(initConnection) on every new TCP session,
+  PHONE/USER/NETWORK_MIGRATE before login (home DC switch), FILE_MIGRATE, auth export/import for file DCs (Document/Photo dc_id),
+  FLOOD_WAIT ≤ 15 s slept like GramJS, -404 → key dropped → "session" error. Session JSON = home DC, auth keys per DC, authorized DCs,
+  user id, peer access hashes (c<id>/u<id>).
+- `TgAccount.kt` (≈ telegram-account.js): config {apiId, apiHash, proxy, name, username} + session, both in `KeystoreTgStore`
+  (filesDir/telegram/*.bin, AES-256-GCM key `shiying_telegram_v1` in AndroidKeyStore; nothing written if the Keystore fails). Phone is
+  never stored. Connection candidates: the 拾影 proxy setting, else Android's system proxy port tried as SOCKS5, then direct/VPN. Login =
+  auth.sendCode → auth.signIn → (SESSION_PASSWORD_NEEDED) account.getPassword + auth.checkPassword(SRP). First use per run checks
+  users.getUsers(self); session errors delete the local session. 退出登录 = auth.logOut (best effort, 20 s) + delete. Diag log (300 lines)
+  redacted with the known secrets + patterns (TgSupport.redact).
+- `TgService.kt` (≈ telegram.js): username → contacts.resolveUsername; t.me/c/<id> → cached access hash → channels.getChannels, else
+  messages.getDialogs paging (main list, then archive folder 1) → no_access. ?comment → messages.getDiscussionMessage → linked group.
+  Message → album (grouped_id, ids msgId±9) unless ?single. noforwards on chat or any message → refuse. Media: photo = largest
+  photoSize/photoSizeProgressive; video = largest of document + alt_documents; GIF (documentAttributeAnimated); image documents;
+  stickers / audio / files / paid → Chinese reason. Download re-fetches the messages first (file_reference expiry, deleted / protected
+  checks), then upload.getFile in 512 KB parts on the file's DC, 4 requests in flight, written in order into `TgSink`
+  (Android: `Tg.GallerySink` → Saver/MediaStore, every entry registered in JobCleanup). Cancel → current file discarded + whole job
+  rolled back; failure after some files → status partial, finished files kept (PC behaviour).
+- Routing: `Platform.TELEGRAM` (t.me, telegram.me, telegram.dog, *.t.me); `Links` also finds scheme-less `t.me/…` and `tg://resolve|privatepost`.
+  `Extractor.route`: logged in → `Extractor.telegram` hook (Tg) → Route.Native(engine "telegram"); not logged in + public post → yt-dlp with
+  `https://t.me/<name>/<id>` (+ login hint on failure); private / comment link → NEED_LOGIN. Share intents: ACTION_SEND text (existing) +
+  VIEW https://t.me|telegram.me|telegram.dog.
+- UI: 登录 chooser first row「Telegram 账号登录」→ `TelegramActivity`. Preview shows「相册：2 张图片 + 1 个视频」+ size; button
+  「下载全部（N 个文件）」. Covers: thumb downloaded over MTProto → cacheDir/tg-covers → `file://` (MainActivity.loadImage / Thumbs.save).
+- Verified in the sandbox: production handshake + encrypted RPC directly, through a local SOCKS5 (user/pass) and through mtprotoproxy
+  (alexbers) with plain and dd secrets (API_ID_INVALID as expected); GramJS byte-for-byte fixtures. Telegram's test DC rejects the documented
+  test-number codes (PHONE_CODE_INVALID, GramJS too), so TgE2ETest (full login → resolve → download → logout) skips. Real login untested.
 
 ## YouTube (2.3) — Deno JS runtime the way YTDLnis does it (`Deno.kt`)
 YTDLnis (v1.9.1.1 + main, `core/packages/Deno.kt`, `PackageBase.kt`, `RuntimeManager.kt`) does NOT drop a deno binary into its data dir

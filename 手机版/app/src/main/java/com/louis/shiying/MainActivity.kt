@@ -156,7 +156,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         Updater.onResume(this)
         if (denoAwaitInstall) onDenoInstallReturned()
-        btnLogin.text = if (Platform.loginable.any { Cookies.isLoggedIn(it) }) "账号" else "登录"
+        btnLogin.text = if (Platform.loginable.any { Cookies.isLoggedIn(it) } || runCatching { Tg.account().loggedIn() }.getOrDefault(false)) "账号" else "登录"
         renderHistory()
         BrowserActivity.requestCookieImport?.let { BrowserActivity.requestCookieImport = null; main.postDelayed({ startCookieImport(it) }, 300) }
     }
@@ -250,7 +250,11 @@ class MainActivity : ComponentActivity() {
                     is Extractor.Route.Ytdlp -> {
                         val proc = "info-$my-${System.currentTimeMillis()}"
                         infoProc = proc
-                        try { Engine.info(this, r.url, r.platform, proc, log) } finally { if (infoProc == proc) infoProc = null }
+                        try { Engine.info(this, r.url, r.platform, proc, log) } catch (e: UserError) {
+                            // Telegram without login: yt-dlp only sees public channel videos → point to the login
+                            if (r.platform != Platform.TELEGRAM) throw e
+                            throw UserError((e.message ?: "解析失败").replace(Regex("""，?(请点右上角「登录」[^。\n]*|该平台暂不支持在拾影里登录)。?"""), "") + TgSupport.LOGIN_HINT)
+                        } finally { if (infoProc == proc) infoProc = null }
                     }
                 }
                 main.post { if (my == gen) { setBusy(false); showPreview(p); setStatus("解析成功（${p.platform.label}）", ok = true) } }
@@ -318,7 +322,12 @@ class MainActivity : ComponentActivity() {
         val parts = mutableListOf<String>()
         parts += p.platform.label
         if (p.author.isNotBlank()) parts += "@${p.author}"
-        if (p.isImages) {
+        if (p.engine == "telegram" && p.tg != null) {
+            parts += p.tg.summary
+            if (p.tg.totalSize > 0) parts += mb(p.tg.totalSize)
+            Parser.formatDuration(p.durationMs).takeIf { it.isNotEmpty() && p.tg.items.size == 1 }?.let { parts += "时长 $it" }
+            if (p.height > 0 && p.tg.items.size == 1) parts += "${p.height}p"
+        } else if (p.isImages) {
             parts += "图集 ${p.images.size} 张"
             if (p.liveCount > 0) parts += "含 ${p.liveCount} 个实况"
         } else {
@@ -350,6 +359,7 @@ class MainActivity : ComponentActivity() {
     private fun downloadLabel(p: Post): String {
         val clean = p.platform in setOf(Platform.DOUYIN, Platform.KUAISHOU, Platform.XIAOHONGSHU, Platform.TIKTOK)
         return when {
+            p.engine == "telegram" -> p.tg?.items?.let { if (it.size > 1) "下载全部（${it.size} 个文件）" else if (it.firstOrNull()?.isVideo == true) "下载视频" else "下载图片" } ?: "下载"
             !p.isImages && p.entries > 1 -> "下载全部视频（${p.entries} 个）"
             !p.isImages -> if (clean) "下载视频（无水印）" else "下载视频"
             p.liveCount > 0 -> "下载全部图片和实况（${p.images.size} 张）"
@@ -599,6 +609,8 @@ class MainActivity : ComponentActivity() {
             val bmp: Bitmap? = try {
                 if (local != null) {
                     if (Build.VERSION.SDK_INT >= 29) contentResolver.loadThumbnail(local, Size(240, 320), null) else null
+                } else if (key.startsWith("file:")) {
+                    Uri.parse(key).path?.let { java.io.File(it) }?.takeIf { it.exists() }?.readBytes()?.let { decode(it, 720) }
                 } else {
                     val rb = Request.Builder().url(key).header("User-Agent", Net.UA_IPHONE)
                     if (referer != null) rb.header("Referer", referer) else if (Links.isDouyin(key) || key.contains("douyinpic")) rb.header("Referer", Net.REFERER)
@@ -649,8 +661,9 @@ class MainActivity : ComponentActivity() {
                     .setNegativeButton("取消", null).show()
                 3 -> AlertDialog.Builder(this).setTitle("使用说明").setMessage(
                     "1. 在 App 里点「分享」→「复制链接」，回到拾影会自动填入，点「解析」。也可以在分享面板里选「拾影」。\n" +
-                    "2. 支持：抖音、快手、小红书、哔哩哔哩、微博、西瓜视频 / 今日头条、YouTube（含 Shorts）、TikTok、Instagram、X / Twitter、Facebook、Vimeo，" +
+                    "2. 支持：抖音、快手、小红书、哔哩哔哩、微博、西瓜视频 / 今日头条、YouTube（含 Shorts）、TikTok、Instagram、X / Twitter、Facebook、Vimeo、Telegram，" +
                     "其他网站也会尝试解析。微信视频号没有公开分享链接，无法支持。\n" +
+                    "Telegram：在消息上长按 →「复制消息链接」。登录自己的账号后（右上角「登录」→「Telegram 账号登录」，需要自己申请 api_id）可以下载私密频道 / 群组、评论区里的视频、图片和相册；没登录时只能下载公开频道的视频。禁止保存内容的频道 / 聊天不下载。\n" +
                     "3. 视频保存到 相册 / Movies/拾影，图片保存到 Pictures/拾影。默认 1080p，可在 ⋮ → 下载画质 改为 最高 / 720p / 480p / 360p / 最低画质（省流量）；预览卡片上的「本次画质」可以只改这一次。\n" +
                     "4. 海外平台在国内需要开启 VPN。解析失败时先点 ⋮ →「更新解析引擎」再试。YouTube 和 YTDLnis 一样优先用 Deno 引擎（⋮ →「安装 Deno 引擎」，64 位手机）；被拒绝时自动依次尝试：更新引擎（nightly） → 备用客户端 → 生成验证令牌（PO Token）；仍不行请换 VPN 节点，或在「登录 → YouTube」登录 / 导入 cookies.txt。需要反馈问题时点 ⋮ →「复制诊断日志」。\n" +
                     "5. 私密、已删除、付费 / 会员专享内容无法下载。部分内容需要登录：点右上角「登录」选择平台登录一次即可（可选，登录状态只保存在本机）。\n" +
@@ -777,9 +790,12 @@ class MainActivity : ComponentActivity() {
 
     private fun showLoginChooser() {
         val ps = Platform.loginable
-        val items = ps.map { p -> p.label + if (Cookies.isLoggedIn(p)) "（已登录）" else "" }.toTypedArray()
+        val tgLogged = runCatching { Tg.account().loggedIn() }.getOrDefault(false)
+        val items = (listOf("Telegram 账号登录" + if (tgLogged) "（已登录）" else "") + ps.map { p -> p.label + if (Cookies.isLoggedIn(p)) "（已登录）" else "" }).toTypedArray()
         AlertDialog.Builder(this).setTitle("登录平台账号（可选）")
-            .setItems(items) { _, w ->
+            .setItems(items) { _, w0 ->
+                if (w0 == 0) { startActivity(Intent(this, TelegramActivity::class.java)); return@setItems }
+                val w = w0 - 1
                 val p = ps[w]
                 if (p == Platform.YOUTUBE) youtubeLoginMenu()
                 else if (Cookies.isLoggedIn(p)) {

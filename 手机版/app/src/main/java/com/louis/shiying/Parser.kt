@@ -36,6 +36,8 @@ data class Post(
     val qualityOverride: String? = null,
     /** yt-dlp: extra options the successful parse attempt used (e.g. --proxy, player clients), reused for the download. */
     val ytdlpArgs: List<String> = emptyList(),
+    /** Telegram (engine "telegram"): chat, message ids and the files to download over MTProto. */
+    val tg: TgPost? = null,
 ) {
     val title: String get() = desc.lineSequence().firstOrNull { it.isNotBlank() }?.trim()?.ifEmpty { null } ?: "（无标题）"
     val liveCount: Int get() = images.count { it.liveVideoUrls.isNotEmpty() }

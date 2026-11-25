@@ -90,7 +90,7 @@ def svg(size, shape):
 def render(svg_text, size, out):
     html = f'<html><body style="margin:0;background:transparent">{svg_text}</body></html>'
     tmp = '/tmp/icon-render.html'; open(tmp, 'w').write(html)
-    subprocess.run([os.environ.get('CHROMIUM', 'chromium'), '--headless=new', '--disable-gpu', '--hide-scrollbars', '--default-background-color=00000000',
+    subprocess.run(['/workspace/work/chromium.sh', '--headless=new', '--disable-gpu', '--hide-scrollbars', '--default-background-color=00000000',
                     f'--window-size={size},{size}', f'--screenshot={out}', 'file://' + tmp], check=True, capture_output=True, timeout=60)
 
 if __name__ == '__main__':

@@ -169,7 +169,18 @@ class DownloadService : Service() {
             showNotif(text, pct, true)
         }
         try {
-            if (p.engine == "ytdlp") {
+            if (p.engine == "telegram") {
+                // MTProto (TgService): every file straight into MediaStore; a cancel / failure rolls back the whole job
+                progress("正在连接 Telegram…", -1)
+                try {
+                    Tg.service().download(p, Tg.GallerySink(this, cleanup, uris), { Downloader.cancelRequested }, { text, pct -> progress(text, pct) })
+                } catch (e: TgError) {
+                    // like the PC version: files that finished stay (a cancel still removes everything)
+                    if (uris.isEmpty() || Downloader.cancelRequested) throw e
+                    cleanup.deleteTemp()
+                    finish(job, "partial", "已保存 ${uris.size}/${p.tg?.items?.size ?: uris.size} 个文件，其余失败：${e.message}", uris); return
+                }
+            } else if (p.engine == "ytdlp") {
                 runYtdlp(job, base, cleanup, uris, ::progress)
             } else if (!p.isImages) {
                 val urls = Quality.order(p.videoUrls, p.heights, p.qualityOverride ?: Engine.quality(this))
@@ -205,6 +216,7 @@ class DownloadService : Service() {
             cleanup.deleteTemp()
             if (Downloader.cancelRequested) throw Cancelled()
             val msg = when {
+                p.engine == "telegram" && uris.size > 1 -> "已保存 ${uris.size} 个文件到 相册/拾影"
                 p.isImages -> "已保存 ${uris.size} 个文件到 相册/拾影"
                 uris.size > 1 -> "已保存 ${uris.size} 个视频到 相册/Movies/拾影"
                 else -> "已保存到 相册/Movies/拾影"
@@ -214,6 +226,9 @@ class DownloadService : Service() {
             cleanup.rollback { Saver.discard(this, Uri.parse(it)) }
             finish(job, "cancelled", "已取消下载", emptyList())
         } catch (e: UserError) {
+            cleanup.rollback { Saver.discard(this, Uri.parse(it)) }
+            finish(job, "failed", e.message ?: "下载失败", emptyList())
+        } catch (e: TgError) {
             cleanup.rollback { Saver.discard(this, Uri.parse(it)) }
             finish(job, "failed", e.message ?: "下载失败", emptyList())
         } catch (e: Exception) {

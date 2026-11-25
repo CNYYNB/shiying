@@ -38,6 +38,8 @@ enum class Platform(
     FACEBOOK("Facebook", listOf("facebook.com", "fb.watch", "fb.com"), "ytdlp",
         "https://m.facebook.com/login/", listOf("c_user"), listOf("facebook.com"), desktopLogin = false),
     VIMEO("Vimeo", listOf("vimeo.com"), "ytdlp", "https://vimeo.com/log_in", listOf("vimeo"), listOf("vimeo.com")),
+    /** 2.4: logged in → MTProto (TgService); not logged in → public channel posts go to yt-dlp. Login is not a WebView (see TelegramActivity). */
+    TELEGRAM("Telegram", listOf("t.me", "telegram.me", "telegram.dog"), "telegram"),
     /** Any other site: handed to yt-dlp as-is (it supports ~1800 sites). */
     OTHER("其他网站", emptyList(), "ytdlp");
 

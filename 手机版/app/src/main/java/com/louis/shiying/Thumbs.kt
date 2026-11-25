@@ -31,6 +31,15 @@ object Thumbs {
 
     /** Download, shrink and store the cover. Blocking; failures are ignored (the list falls back to the media thumbnail). */
     fun save(ctx: Context, key: String, post: Post) {
+        post.cover?.takeIf { it.startsWith("file:") }?.let { c ->
+            runCatching {
+                val bytes = java.io.File(android.net.Uri.parse(c).path ?: return).readBytes()
+                val bmp = decode(bytes, 360) ?: return
+                val f = file(ctx, key); f.parentFile?.mkdirs()
+                f.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 85, it) }
+            }
+            return
+        }
         val url = post.cover?.replaceFirst("http://", "https://")?.takeIf { it.startsWith("https://") } ?: return
         runCatching {
             val rb = Request.Builder().url(url).header("User-Agent", if (post.platform.native) Net.UA_IPHONE else Net.UA_DESKTOP)

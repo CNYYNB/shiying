@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/bg" android:fitsSystemWindows="true">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="52dp"
+        android:orientation="horizontal" android:gravity="center_vertical" android:paddingLeft="8dp" android:paddingRight="8dp">
+        <TextView android:id="@+id/back" android:layout_width="44dp" android:layout_height="44dp"
+            android:gravity="center" android:text="‹" android:textSize="30sp" android:textColor="@color/text"
+            android:background="?android:attr/selectableItemBackgroundBorderless" android:contentDescription="返回"/>
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:text="Telegram 账号登录" android:textSize="18sp" android:textStyle="bold" android:textColor="@color/text" android:paddingStart="4dp"/>
+        <ProgressBar android:id="@+id/busy" android:layout_width="22dp" android:layout_height="22dp"
+            android:indeterminateTint="@color/red" android:visibility="gone" android:layout_marginEnd="8dp"/>
+    </LinearLayout>
+
+    <ScrollView android:id="@+id/scroll" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingLeft="16dp" android:paddingRight="16dp" android:paddingBottom="24dp">
+
+            <!-- status -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"
+                android:background="@drawable/card" android:padding="14dp" android:layout_marginTop="4dp">
+                <TextView android:id="@+id/state" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:textSize="16sp" android:textStyle="bold" android:textColor="@color/text" android:text="未登录"/>
+                <TextView android:id="@+id/stateSub" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:textSize="13sp" android:textColor="@color/text2" android:layout_marginTop="4dp"/>
+                <LinearLayout android:id="@+id/loggedBox" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:layout_marginTop="10dp" android:visibility="gone">
+                    <Button android:id="@+id/btnLogout" android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp"
+                        android:text="退出登录" android:textColor="@color/red" android:textSize="15sp" android:textStyle="bold"
+                        android:background="@drawable/btn_outline" android:stateListAnimator="@null"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- guide -->
+            <TextView android:id="@+id/guideToggle" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="14dp" android:paddingTop="6dp" android:paddingBottom="6dp"
+                android:text="▸ 第一步：申请 api_id 和 api_hash（只需要做一次，点开看步骤）" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/red"/>
+            <TextView android:id="@+id/guide" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:textSize="14sp" android:textColor="@color/text" android:lineSpacingExtra="3dp" android:visibility="gone"
+                android:background="@color/surface" android:padding="12dp" android:textIsSelectable="true"/>
+
+            <LinearLayout android:id="@+id/form" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                    android:text="第二步：在拾影里登录" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/text"/>
+
+                <TextView style="@style/TgLabel" android:text="api_id（一串数字）"/>
+                <EditText android:id="@+id/apiId" style="@style/TgInput" android:inputType="number" android:hint="例如 1234567"/>
+                <TextView style="@style/TgLabel" android:text="api_hash（32 位字母和数字）"/>
+                <EditText android:id="@+id/apiHash" style="@style/TgInput" android:inputType="textNoSuggestions|textVisiblePassword" android:hint="my.telegram.org 上的 App api_hash"/>
+                <TextView style="@style/TgLabel" android:text="手机号（国内号码可以不写 +86）"/>
+                <EditText android:id="@+id/phone" style="@style/TgInput" android:inputType="phone" android:hint="+8613800138000"/>
+
+                <TextView style="@style/TgLabel" android:text="代理（可选，国内一般需要）"/>
+                <EditText android:id="@+id/proxy" style="@style/TgInput" android:inputType="textUri|textNoSuggestions"
+                    android:hint="留空 = 直连 / VPN；或 socks5://127.0.0.1:7890；或 MTProxy 链接"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                    android:textSize="12sp" android:textColor="@color/text2"
+                    android:text="开着 VPN（Clash / v2rayNG 的 VPN 模式）时一般留空即可。连不上再填 SOCKS5（如 socks5://127.0.0.1:7890，v2rayNG 一般是 socks5://127.0.0.1:10808）或粘贴 MTProxy 链接（tg://proxy?server=…&amp;port=…&amp;secret=…）。Telegram 不支持 HTTP 代理；FakeTLS（secret 以 ee 开头）的 MTProxy 也不支持。"/>
+                <Button android:id="@+id/btnTest" android:layout_width="match_parent" android:layout_height="44dp" android:layout_marginTop="8dp"
+                    android:text="测试连接" android:textColor="@color/red" android:textSize="15sp" android:textStyle="bold"
+                    android:background="@drawable/btn_outline" android:stateListAnimator="@null"/>
+
+                <Button android:id="@+id/btnSend" android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="14dp"
+                    android:text="发送验证码" android:textColor="@color/on_red" android:textSize="16sp" android:textStyle="bold"
+                    android:background="@drawable/btn_red" android:stateListAnimator="@null"/>
+
+                <LinearLayout android:id="@+id/codeBox" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:visibility="gone">
+                    <TextView android:id="@+id/codeLabel" style="@style/TgLabel" android:text="验证码（看手机 Telegram App 里「Telegram」官方账号发来的消息）"/>
+                    <EditText android:id="@+id/code" style="@style/TgInput" android:inputType="number" android:hint="5 位数字"/>
+                    <Button android:id="@+id/btnSignIn" android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="10dp"
+                        android:text="登录" android:textColor="@color/on_red" android:textSize="16sp" android:textStyle="bold"
+                        android:background="@drawable/btn_red" android:stateListAnimator="@null"/>
+                    <TextView android:id="@+id/btnResend" android:layout_width="wrap_content" android:layout_height="40dp"
+                        android:gravity="center_vertical" android:text="重新发送验证码" android:textColor="@color/red" android:textSize="14sp"/>
+                </LinearLayout>
+
+                <LinearLayout android:id="@+id/pwBox" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:visibility="gone">
+                    <TextView android:id="@+id/pwLabel" style="@style/TgLabel" android:text="两步验证密码"/>
+                    <EditText android:id="@+id/password" style="@style/TgInput" android:inputType="textPassword"/>
+                    <Button android:id="@+id/btnPassword" android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="10dp"
+                        android:text="提交密码" android:textColor="@color/on_red" android:textSize="16sp" android:textStyle="bold"
+                        android:background="@drawable/btn_red" android:stateListAnimator="@null"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView android:id="@+id/msg" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:textSize="14sp" android:textColor="@color/text2" android:textIsSelectable="true"/>
+
+            <TextView android:id="@+id/help" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="16dp" android:textSize="13sp" android:textColor="@color/text2" android:lineSpacingExtra="2dp"/>
+
+            <TextView android:id="@+id/btnDiag" android:layout_width="wrap_content" android:layout_height="40dp"
+                android:gravity="center_vertical" android:text="复制 Telegram 诊断日志（已隐藏敏感信息）" android:textColor="@color/red" android:textSize="14sp"/>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

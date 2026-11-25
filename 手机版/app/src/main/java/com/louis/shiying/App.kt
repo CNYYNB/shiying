@@ -17,6 +17,7 @@ class App : Application() {
         }
         Cookies.appCtx = this
         Engine.initAsync(this)
+        Tg.init(this)
         DownloadService.ensureChannel(this)
         History.fixStale(this, DownloadService.active)
     }

@@ -11,3 +11,5 @@
 | AndroidX / androidx.webkit | Apache-2.0 | 界面与 WebView |
 | BgUtils 算法参考（LuanRT） | MIT | `assets/potoken.js` 依其算法独立编写 |
 | YTDLnis（deniscerri） | GPL-3.0 | Deno 组件包的调用方式参考 |
+| Telegram MTProto（拾影自带的 Kotlin 实现，`mtproto/`） | GPL-3.0（随本项目） | Telegram 账号登录下载（2.4） |
+| Telegram API TL 架构（`assets/telegram/api.tl`、`schema.tl`，layer 198，取自 GramJS 2.26） | Telegram 公开架构 / GramJS MIT | 运行时解析 TL；GramJS 只用于生成测试数据（`tools/tg-fixtures.js`），未打包 |

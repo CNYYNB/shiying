@@ -27,8 +27,8 @@
 
 到右边的 **Releases** 下载最新版：
 
-- 手机：`Shiying-Android-2.3-arm64-v8a.apk`（绝大多数手机装这个，Android 7 及以上）
-- 老的 32 位手机：`Shiying-Android-2.3-armeabi-v7a.apk`
+- 手机：`Shiying-Android-2.4-arm64-v8a.apk`（绝大多数手机装这个，Android 7 及以上）
+- 老的 32 位手机：`Shiying-Android-2.4-armeabi-v7a.apk`
 - Windows：`Shiying-Windows-Setup-1.1.1.exe`（Windows 10/11 64 位）
 - Mac（M 芯片）：`Shiying-macOS-1.1.1-arm64.zip`；Mac（Intel）：`Shiying-macOS-1.1.1-x64.zip`（macOS 12 及以上，安装步骤见 [电脑版/README.md](电脑版/README.md)）
 
@@ -48,7 +48,7 @@
 | Instagram | yt-dlp | ✅ 能下 | 易限流 |
 | Facebook | yt-dlp | 未测 | |
 | Vimeo | yt-dlp | 未测 | 常需登录 |
-| Telegram | 账号登录（电脑版）/ yt-dlp | 未测登录 | 不登录只能下公开频道；登录后可下私密频道、超级群、评论、相册；禁止保存内容的不下 |
+| Telegram | 账号登录 / yt-dlp | 未测登录 | 不登录只能下公开频道；登录后可下私密频道、超级群、评论、相册；禁止保存内容的不下 |
 | 其他网站 | yt-dlp | — | yt-dlp 支持的都行 |
 
 「未测」是作者的测试环境（海外 IP）被平台拦截、没能实测，不代表不能用。欢迎在 Issues 里反馈你的结果。
@@ -61,7 +61,7 @@
 - 画质可选（最高 / 1080p / 720p / 480p / 360p / 省流量）
 - 下载记录、取消下载、进度显示；手机版直接存进相册
 - 需要登录的平台可以在 App 内网页登录（cookie 只保存在本机，交给 yt-dlp 使用）
-- 电脑版可登录 Telegram（用你自己的 api_id / api_hash，登录状态加密保存在本机），步骤见 [电脑版/README.md](电脑版/README.md)
+- 手机版和电脑版都可登录 Telegram（用你自己的 api_id / api_hash，登录状态加密保存在本机），步骤见 [电脑版/README.md](电脑版/README.md)
 - 解析引擎 yt-dlp 可在应用内更新
 - 诊断日志一键复制（会去掉 cookie 和 token）
 
@@ -79,20 +79,20 @@
 
 > **YouTube 对网络 IP 要求较高**：节点要干净（没被大量共享或滥用），否则容易报「Sign in to confirm you’re not a bot」或下载失败。遇到这种情况先换一个节点再试。
 
-## Telegram 使用说明（电脑版 Windows / Mac）
+## Telegram 使用说明（手机版 2.4 / 电脑版 1.1.1 起）
 
 **不登录**：只能下公开频道里的单条帖子（如 `t.me/频道名/123`）。判断方法：用浏览器打开链接，能直接看到并播放视频的就能下。
 
 **登录后**：你账号能看到的私密频道、超级群、频道评论、话题、相册都能下。
 
 1. 申请 api_id / api_hash（只做一次）：浏览器打开 [my.telegram.org](https://my.telegram.org)（国内需开代理）→ 输入带区号的手机号 → 验证码在 Telegram App 里（不是短信）→ 点 **API development tools** → App title 填 `shiying`、Short name 填 `shiyingpc`、Platform 选 Desktop → **Create application** → 复制 **api_id** 和 **api_hash**。
-2. 在拾影右上角「登录」→「Telegram 账号登录」，填 api_id、api_hash、手机号。
+2. 在拾影「登录」→「Telegram 账号登录」，填 api_id、api_hash、手机号。
 3. 代理：开了 Clash / v2rayN 系统代理一般可留空；连不上就填 `socks5://127.0.0.1:7890`（v2rayN 常见 `socks5://127.0.0.1:10808`）或 MTProxy 链接，可先点「测试连接」。
 4. 发送验证码 → 在 Telegram App 里查看 → 填入登录；开了两步验证的再输密码。
-5. 在消息上右键 / 长按 →「复制消息链接」→ 粘贴到拾影 → 下载。
+5. 在 Telegram 里长按（电脑上右键）消息 →「复制消息链接」→ 粘贴到拾影 → 下载。
 
 **注意**
-- api_id / api_hash 和登录状态只加密保存在你自己电脑上，不要发给别人。退出：「登录 → Telegram 设置 → 退出 Telegram 登录」。
+- api_id / api_hash 和登录状态只加密保存在你自己的手机或电脑上，不要发给别人。退出：「登录 → Telegram 设置 → 退出 Telegram 登录」。
 - 私聊和普通小群没有消息链接：先把消息转发到你自己建的私密频道，再复制那条的链接。
 - 开了「禁止保存内容」的频道 / 聊天，拾影不下载。
 - 不下载贴纸、语音、普通文件和付费内容；不支持 HTTP 代理和 `ee` 开头的 MTProxy。

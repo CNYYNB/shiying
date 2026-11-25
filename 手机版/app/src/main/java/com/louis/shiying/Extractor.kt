@@ -18,6 +18,13 @@ class UserError(message: String) : Exception(message)
 object Extractor {
     data class Target(val id: String, val likelyImages: Boolean)
 
+    /** Telegram account hook (set by App): logged in → MTProto resolve; otherwise public posts go to yt-dlp. */
+    interface Telegram {
+        fun loggedIn(): Boolean
+        fun resolve(link: TgLink, log: (String) -> Unit): Post
+    }
+    @Volatile var telegram: Telegram? = null
+
     /** What the router decided for a pasted text. */
     sealed class Route {
         class Native(val post: Post) : Route()
@@ -34,6 +41,13 @@ object Extractor {
         return when (platform) {
             Platform.DOUYIN -> Route.Native(fromSharePage(resolve(text, log), log))
             Platform.KUAISHOU -> Route.Native(Kuaishou.parse(text, log))
+            Platform.TELEGRAM -> {
+                val link = try { TgSupport.parseLink(Links.findUrl(text)) } catch (e: TgLinkError) { throw UserError(e.message ?: TgSupport.MSG_BAD) }
+                val tg = telegram
+                if (tg != null && tg.loggedIn()) Route.Native(tg.resolve(link, log))
+                else if (!link.publicFallback) throw UserError(TgSupport.NEED_LOGIN)
+                else { log("没有登录 Telegram，用解析引擎试公开频道…"); Route.Ytdlp(link.fallbackUrl, platform) }
+            }
             Platform.XIAOHONGSHU -> try { Route.Native(Xhs.parse(text, log)) } catch (e: Xhs.XhsNoData) {
                 log("页面没有笔记数据，改用解析引擎…")
                 Route.Ytdlp(e.url, platform)

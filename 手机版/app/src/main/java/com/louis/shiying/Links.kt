@@ -4,7 +4,7 @@ package com.louis.shiying
 object Links {
     private val URL_RE = Regex("""https?://[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]+""")
     /** Links pasted without a scheme (e.g. "b23.tv/xxxx", "xhslink.cn/o/xxx"): only for known platform hosts. */
-    private val BARE_RE = Regex("""(?<![A-Za-z0-9@./])((?:[A-Za-z0-9-]+\.)+(?:com|cn|tv|be|am|co|net|watch)/[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]+)""")
+    private val BARE_RE = Regex("""(?<![A-Za-z0-9@./])((?:[A-Za-z0-9-]+\.)+(?:com|cn|tv|be|am|co|net|watch|me|dog)/[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]+)""")
     private val ID_RES = listOf(
         Regex("""/(?:video|note|slides|gallery|share/video|share/note|share/slides|shipin|lvdetail|vsdetail)/(\d{8,21})"""),
         Regex("""[?&#](?:modal_id|aweme_id|item_id|vid|group_id)=(\d{8,21})"""),
@@ -17,6 +17,7 @@ object Links {
     fun allUrls(text: String): List<String> {
         val withScheme = URL_RE.findAll(text).map { trimTail(it.value) }.toList()
         if (withScheme.isNotEmpty()) return withScheme
+        TgSupport.tgSchemeToHttps(text)?.let { return listOf(it) } // tg://resolve?domain=…&post=… / tg://privatepost?…
         return BARE_RE.findAll(text).map { "https://" + trimTail(it.groupValues[1]) }
             .filter { Platform.ofUrl(it) != Platform.OTHER }.toList()
     }

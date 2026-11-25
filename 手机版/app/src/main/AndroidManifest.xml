@@ -59,7 +59,22 @@
                 <data android:scheme="https" android:host="vt.tiktok.com" />
                 <data android:scheme="https" android:host="vm.tiktok.com" />
             </intent-filter>
+            <!-- 2.4: Telegram message links (t.me/…) opened with 拾影 -->
+            <intent-filter android:label="@string/share_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="t.me" />
+                <data android:scheme="https" android:host="telegram.me" />
+                <data android:scheme="https" android:host="telegram.dog" />
+            </intent-filter>
         </activity>
+
+        <activity
+            android:name=".TelegramActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
 
         <activity
             android:name=".BrowserActivity"

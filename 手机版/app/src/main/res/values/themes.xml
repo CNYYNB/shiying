@@ -11,4 +11,24 @@
         <item name="android:textColorSecondary">@color/text2</item>
         <item name="android:forceDarkAllowed" tools:targetApi="q" xmlns:tools="http://schemas.android.com/tools">false</item>
     </style>
+    <style name="TgLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">10dp</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/text2</item>
+    </style>
+    <style name="TgInput">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:background">@drawable/input</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingRight">12dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textColorHint">@color/text2</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:importantForAutofill">no</item>
+    </style>
 </resources>

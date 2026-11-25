@@ -13,8 +13,8 @@ android {
         applicationId = "com.louis.shiying"
         minSdk = 24
         targetSdk = 34
-        versionCode = 5
-        versionName = "2.3"
+        versionCode = 6
+        versionName = "2.4"
         // Manifest mirrors, tried in order (comma separated). Override with -PupdateUrls=https://a/version.json,https://b/version.json
         val updateUrls = (project.findProperty("updateUrls") as String?)
             ?: "https://shiying-louis.pages.dev/version.json,https://fastly.jsdelivr.net/gh/louis-shiying/shiying-update@main/version.json"
