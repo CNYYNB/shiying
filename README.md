@@ -79,6 +79,25 @@
 
 > **YouTube 对网络 IP 要求较高**：节点要干净（没被大量共享或滥用），否则容易报「Sign in to confirm you’re not a bot」或下载失败。遇到这种情况先换一个节点再试。
 
+## Telegram 使用说明（电脑版 Windows / Mac）
+
+**不登录**：只能下公开频道里的单条帖子（如 `t.me/频道名/123`）。判断方法：用浏览器打开链接，能直接看到并播放视频的就能下。
+
+**登录后**：你账号能看到的私密频道、超级群、频道评论、话题、相册都能下。
+
+1. 申请 api_id / api_hash（只做一次）：浏览器打开 [my.telegram.org](https://my.telegram.org)（国内需开代理）→ 输入带区号的手机号 → 验证码在 Telegram App 里（不是短信）→ 点 **API development tools** → App title 填 `shiying`、Short name 填 `shiyingpc`、Platform 选 Desktop → **Create application** → 复制 **api_id** 和 **api_hash**。
+2. 在拾影右上角「登录」→「Telegram 账号登录」，填 api_id、api_hash、手机号。
+3. 代理：开了 Clash / v2rayN 系统代理一般可留空；连不上就填 `socks5://127.0.0.1:7890`（v2rayN 常见 `socks5://127.0.0.1:10808`）或 MTProxy 链接，可先点「测试连接」。
+4. 发送验证码 → 在 Telegram App 里查看 → 填入登录；开了两步验证的再输密码。
+5. 在消息上右键 / 长按 →「复制消息链接」→ 粘贴到拾影 → 下载。
+
+**注意**
+- api_id / api_hash 和登录状态只加密保存在你自己电脑上，不要发给别人。退出：「登录 → Telegram 设置 → 退出 Telegram 登录」。
+- 私聊和普通小群没有消息链接：先把消息转发到你自己建的私密频道，再复制那条的链接。
+- 开了「禁止保存内容」的频道 / 聊天，拾影不下载。
+- 不下载贴纸、语音、普通文件和付费内容；不支持 HTTP 代理和 `ee` 开头的 MTProxy。
+- 请求太频繁 Telegram 会让你等待（会显示秒数），等一会儿再试。
+
 ## 使用须知
 
 仅供个人学习，以及备份你自己有权保存的内容。请遵守各平台的服务条款和当地法律，**不要用于搬运、二次发布、商用或侵犯他人版权**。下载内容的版权归原作者所有。
