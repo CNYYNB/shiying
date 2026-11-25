@@ -41,7 +41,7 @@
 | TikTok | yt-dlp | ✅ 能下 | |
 | X / Twitter | yt-dlp | ✅ 能下 | 纯图帖不下 |
 | 哔哩哔哩 | yt-dlp | ✅ 能下 | |
-| YouTube | yt-dlp + Deno | ✅ 能下 | 含 Shorts |
+| YouTube | yt-dlp + Deno | ✅ 能下 | 含 Shorts；对 IP 要求较高，见下方说明 |
 | 微博 | yt-dlp | ✅ 能下 | |
 | 西瓜 / 头条 | yt-dlp | 未测 | |
 | Instagram | yt-dlp | ✅ 能下 | 易限流 |
@@ -69,6 +69,8 @@
 3. 看一眼预览，选画质，点下载。
 
 电脑版第一次运行会自动下载 yt-dlp、FFmpeg（以及 YouTube 需要的 Deno），国内会自动走镜像。更新 yt-dlp 和下载 YouTube 在国内一般需要开 VPN。
+
+> **YouTube 对网络 IP 要求较高**：节点要干净（没被大量共享或滥用），否则容易报「Sign in to confirm you’re not a bot」或下载失败。遇到这种情况先换一个节点再试。
 
 ## 使用须知
 
